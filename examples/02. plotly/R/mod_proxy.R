@@ -317,8 +317,11 @@ mod_proxy_server <- function(id) {
     })
 
     # --- SECONDARY Y-AXIS: overlay cumulative distribution -------------------
-    # Demonstrates addTraces / deleteTraces via proxy
-    observeEvent(input$show_cumulative, {
+    # Demonstrates addTraces / deleteTraces via proxy.
+    # ignoreInit = TRUE: at startup the box is unchecked, and running the else
+    # branch would call deleteTraces() on a trace index that does not exist yet
+    # (only the 23 base traces are present), throwing in the browser console.
+    observeEvent(input$show_cumulative, ignoreInit = TRUE, {
       if (input$show_cumulative) {
         # Compute cumulative fraction of significant SNPs along the genome
         sig_data <- proxy_data[neglog10p >= GENOME_WIDE_SIG][order(bp_cum)]

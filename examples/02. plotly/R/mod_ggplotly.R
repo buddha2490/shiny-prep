@@ -219,9 +219,18 @@ mod_ggplotly_server <- function(id) {
         theme_plotly_clean()
 
       # --- Convert to plotly with cleanup ------------------------------------
-      ggplotly(p, tooltip = "text") %>%
-        # Fix: ggplotly puts the ribbon hover as "text" too — disable it
-        style(hoverinfo = "skip", traces = if (input$show_ci) 1 else NULL) %>%
+      gg <- ggplotly(p, tooltip = "text")
+
+      # Fix: when the CI band is shown it is the first layer, so it becomes
+      # trace 1. ggplotly gives the ribbon a "text" hover too, so skip hover on
+      # JUST that trace. Guard the call — style(traces = NULL) applies the
+      # attribute to EVERY trace (per ?style), which would kill hover on the
+      # points when the band is hidden.
+      if (input$show_ci) {
+        gg <- style(gg, hoverinfo = "skip", traces = 1)
+      }
+
+      gg %>%
         layout(
           # Fix: ggplotly legend title renders with <br> prefix
           legend = list(
@@ -267,7 +276,6 @@ mod_ggplotly_server <- function(id) {
         theme_plotly_clean()
 
       ggplotly(p, tooltip = "text") %>%
-        # Skip hover on the abline trace (always the last trace added by ggplot)
         layout(
           legend = list(title = list(text = ""))
         ) %>%
