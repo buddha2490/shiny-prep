@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "npm-rag-v1": {
+      "command": "/Users/briancarter/Rdata/npm-rag-v1/.venv/bin/python3",
+      "args": ["/Users/briancarter/Rdata/npm-rag-v1/scripts/mcp_server.py"],
+      "env": {
+        "DB_PATH": "/Users/briancarter/Rdata/npm-rag-v1/rag.db"
+      }
+    }
+  }
+}

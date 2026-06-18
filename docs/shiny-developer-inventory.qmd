@@ -1,0 +1,290 @@
+---
+title: "R Shiny Developer — Skills & Tools Inventory"
+subtitle: "A comprehensive checklist for pharma Shiny development"
+date: 2026-06-14
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    theme: cosmo
+    number-sections: true
+---
+
+# Development Frameworks
+
+Structured frameworks for building production-grade Shiny apps.
+
+| Framework | Purpose | Key Feature |
+|-----------|---------|-------------|
+| **golem** | Production-grade app scaffold | Package-based structure, deployment helpers |
+| **rhino** | Enterprise Shiny apps (Appsilon) | Box modules, Sass, Cypress E2E testing |
+| **leprechaun** | Lightweight app scaffold | Minimal overhead, à la carte features |
+| **Raw Shiny** | Small apps / prototyping | No framework overhead |
+
+**Reference:** [Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/) (the "golem book")
+
+# Application Architecture
+
+## Shiny Modules
+
+- `moduleServer()` / `NS()` pattern for encapsulating UI + server logic
+- Module communication: return values, shared reactive values, callbacks
+- Nested modules and module composition patterns
+
+## R6 Classes
+
+- Mutable state management across modules via R6 objects
+- Encapsulating business logic separate from Shiny reactivity
+- Interface pattern for testability (swap implementations without changing UI code)
+
+## Reactive Programming
+
+- `reactive()`, `reactiveVal()`, `reactiveValues()`
+- `observe()` vs `observeEvent()` — side effects and event-driven logic
+- `isolate()` — breaking reactive dependencies
+- `req()` — guarding against NULL / FALSE inputs
+- `debounce()` / `throttle()` — controlling reactive event frequency
+- `bindEvent()` — explicit event binding (Shiny 1.6+)
+- Reactive graph mental model — understanding invalidation and flushing
+
+# UI & Theming
+
+## Layout & Component Libraries
+
+| Package | Description |
+|---------|-------------|
+| **bslib** | Bootstrap 5 theming, custom components, value boxes, cards, sidebars |
+| **shinydashboard** | Classic AdminLTE dashboard layout (header, sidebar, body) |
+| **shinydashboardPlus** | Extensions to shinydashboard (user boxes, timeline, etc.) |
+| **bs4Dash** | Bootstrap 4 dashboard (AdminLTE3) |
+| **shiny.fluent** | Microsoft Fluent UI components |
+| **shiny.semantic** | Fomantic (Semantic) UI components |
+| **shinyWidgets** | Extended input widgets (pickers, switches, knobs, etc.) |
+| **bsicons** | Bootstrap icon set for bslib layouts |
+
+## Theming
+
+| Package | Description |
+|---------|-------------|
+| **bslib** | `bs_theme()` for Bootstrap variable customization |
+| **thematic** | Auto-translates CSS theme to R plot defaults (ggplot2, base, lattice) |
+| **fresh** | Custom themes for shinydashboard / bs4Dash |
+| **Sass** | Direct Sass/SCSS compilation via `sass::sass()` |
+
+## CSS Integration
+
+- Custom stylesheets via `tags$link()` or `includeCSS()`
+- Inline styles with `tags$style()`
+- Sass preprocessing with the `sass` package or rhino's built-in Sass pipeline
+- CSS specificity, Flexbox, Grid — enough to debug and override framework defaults
+
+# JavaScript Integration
+
+## Core Patterns
+
+- `tags$script()` / `includeScript()` — injecting custom JS
+- `Shiny.setInputValue()` — JS → R communication
+- `Shiny.addCustomMessageHandler()` — R → JS communication
+- Custom input/output bindings — full bidirectional widget control
+
+## JS Libraries & Tooling
+
+| Package / Tool | Description |
+|----------------|-------------|
+| **shinyjs** | Common JS operations without writing JS (show/hide, enable/disable, run JS) |
+| **htmlwidgets** | Framework for wrapping JS libraries as R packages |
+| **reactR** | Embed React components in Shiny |
+| **crosstalk** | Linked brushing / filtering across htmlwidgets without server round-trips |
+| **waiter** | Loading screens, spinners, progress indicators |
+| **cicerone** | Guided tours of the app UI |
+
+# Data Visualization
+
+## Static & Interactive Plots
+
+| Package | Description |
+|---------|-------------|
+| **ggplot2** | Grammar of graphics — the standard for static plots |
+| **plotly** | Interactive plots; `ggplotly()` for quick ggplot2 conversion |
+| **highcharter** | Highcharts JS wrapper — rich interactive charts |
+| **echarts4r** | Apache ECharts wrapper — performant, highly customizable |
+| **ggiraph** | Interactive ggplot2 (hover, click, zoom) without full plotly overhead |
+| **dygraphs** | Time series interactive charts |
+| **leaflet** | Interactive maps |
+| **visNetwork** | Network/graph visualization |
+
+## Tables
+
+| Package | Description |
+|---------|-------------|
+| **DT** | DataTables JS wrapper — sortable, filterable, paginated tables |
+| **reactable** | React-based tables with inline visualizations and custom rendering |
+| **gt** | Grammar of tables — publication-quality static tables |
+| **rhandsontable** | Editable spreadsheet-style tables |
+
+# Asynchronous & Parallel Programming
+
+## Async in Shiny
+
+| Package | Description |
+|---------|-------------|
+| **promises** | Promise-based async programming (`.then()`, `.catch()`) |
+| **future** | Backend-agnostic parallel/async evaluation |
+| **future.callr** | future backend using callr (separate R processes) |
+| **callr** | Run R code in background processes |
+| **crew** | Task orchestration / worker pools |
+| **ExtendedTask** | Shiny 1.8+ built-in non-blocking task pattern |
+| **mirai** | Minimalist async evaluation framework |
+
+## Key Concepts
+
+- `future_promise()` pattern — offload long computations without blocking other users
+- `ExtendedTask$new()` — native Shiny async (recommended for new apps)
+- Worker pool sizing and lifecycle management
+- Progress reporting from async tasks
+
+# Testing
+
+## Unit Testing
+
+| Package | Description |
+|---------|-------------|
+| **testthat** | Standard R unit testing framework |
+| **shinytest2** | Automated Shiny app testing via headless Chromium |
+| **testServer()** | Test module server logic without a browser |
+
+## Integration / E2E Testing
+
+| Tool | Description |
+|------|-------------|
+| **shinytest2** | Record-and-replay or scripted browser tests |
+| **Cypress** | JS-based E2E testing (used by rhino) |
+| **shinyloadtest** | Load/stress testing for Shiny apps |
+
+## Testing Patterns
+
+- Test business logic (R6 classes, pure functions) independently of Shiny
+- `testServer()` for reactive logic without UI
+- `shinytest2::AppDriver` for full integration tests
+- Snapshot testing for rendered outputs (plots, tables)
+- Mock data and dependency injection for reproducible tests
+
+# Performance & Optimization
+
+## Profiling
+
+| Tool | Description |
+|------|-------------|
+| **profvis** | Visual profiler for R code |
+| **reactlog** | Visualize the reactive dependency graph |
+| **shiny.tictoc** | JS-based timing for Shiny render cycles |
+
+## Caching
+
+| Mechanism | Description |
+|-----------|-------------|
+| `bindCache()` | Cache reactive expressions and render outputs by key |
+| **memoise** | Function-level memoization |
+| **cachem** | Backend cache store (memory, disk) used by bindCache |
+
+## Database & Data Layer
+
+| Package | Description |
+|---------|-------------|
+| **pool** | Managed database connection pooling for Shiny |
+| **DBI** | Database interface |
+| **dbplyr** | dplyr backend for databases (lazy evaluation, server-side filtering) |
+| **arrow** | Read/write Parquet, Feather — fast columnar data |
+| **pins** | Publish and cache versioned datasets |
+| **sparklyr** | Spark interface for large-scale data |
+
+## Optimization Techniques
+
+- Pre-aggregate data outside the app where possible
+- `debounce()` / `throttle()` to limit reactive churn
+- Pagination and server-side processing for large tables (DT)
+- Minimize reactive dependencies — keep the reactive graph narrow
+
+# Deployment & DevOps
+
+## Hosting Platforms
+
+| Platform | Description |
+|----------|-------------|
+| **Posit Connect** | Enterprise deployment, scheduled reports, access control |
+| **ShinyApps.io** | Managed cloud hosting |
+| **Shiny Server (Open Source)** | Self-hosted on Linux |
+| **ShinyProxy** | Container-based deployment with authentication |
+| **Shinylive** | Serverless — runs entirely in the browser via webR |
+
+## Containerization & Orchestration
+
+| Tool | Description |
+|------|-------------|
+| **Docker** | Containerize the app with all dependencies |
+| **rocker** | Pre-built R Docker images |
+| **Kubernetes** | Orchestrate scaled deployments |
+| **Helm** | Package Kubernetes deployments |
+
+## CI/CD
+
+- GitHub Actions / GitLab CI for automated testing and deployment
+- `renv` for reproducible package environments
+- Automated `shinytest2` runs in CI pipelines
+- Container image builds triggered on merge
+
+# Pharma-Specific Considerations
+
+## Validation & Compliance
+
+- GxP validation frameworks for Shiny apps (risk assessment, traceability, IQ/OQ/PQ)
+- 21 CFR Part 11 awareness (audit trails, electronic signatures)
+- Package validation: `riskmetric`, `thevalidatoR`
+- Documenting intended use and testing evidence
+
+## Clinical Dashboards
+
+- CDISC data (SDTM/ADaM) as input — standardized data contracts
+- Interactive patient profiles and safety review dashboards
+- Subgroup filtering, cohort selection, drill-down patterns
+- Export to validated formats (RTF tables, PDF listings)
+
+## Pharma Shiny Ecosystem
+
+| Package | Description |
+|---------|-------------|
+| **teal** | Roche's modular framework for exploratory clinical data analysis |
+| **teal.modules.general** | General-purpose teal modules (scatterplot, histogram, etc.) |
+| **teal.modules.clinical** | Clinical-specific teal modules (KM plot, forest plot, etc.) |
+| **falcon** | FDA-sponsored Shiny safety reporting modules |
+| **safetyGraphics** | Interactive safety graphics (labs, AEs) |
+| **tidyCDISC** | Drag-and-drop CDISC data exploration app |
+
+# Useful Utilities
+
+| Package | Description |
+|---------|-------------|
+| **config** | Environment-specific configuration (dev/staging/prod) |
+| **log4r** / **logger** | Structured logging |
+| **sentry** / **bugsnag** | Error monitoring in production |
+| **gargoyle** | Event-based reactivity (named triggers instead of reactive chains) |
+| **shinyFeedback** | Inline user input validation messages |
+| **shinymanager** / **shinyauthr** | Authentication and user management |
+| **cookies** / **shinyStorePlus** | Persistent user preferences |
+| **sortable** | Drag-and-drop UI for bucket lists, ranking |
+| **shinymeta** | Generate reproducible R scripts from user interactions |
+| **shinyAce** | Code editor widget (Ace editor) |
+| **esquisse** | Interactive ggplot2 builder as a Shiny module |
+| **shinycssloaders** | Automatic loading spinners for outputs |
+
+# Learning Resources
+
+| Resource | Type |
+|----------|------|
+| [Mastering Shiny](https://mastering-shiny.org/) (Hadley Wickham) | Book |
+| [Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/) | Book |
+| [Outstanding User Interfaces with Shiny](https://unleash-shiny.rinterface.com/) | Book |
+| [Shiny Developer Series](https://shinydevseries.com/) | Podcast/Video |
+| [Appsilon Blog](https://www.appsilon.com/blog) | Articles |
+| [Posit Community](https://forum.posit.co/) | Forum |
+| Shiny Conf recordings (Appsilon) | Conference talks |
