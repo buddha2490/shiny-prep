@@ -31,6 +31,16 @@ Key rules for your testing work:
 
 ---
 
+## Knowledge Base & Skills — Use Before You Assert
+
+This project ships two curated assets that are your first stop, not optional reference. Generic training memory is the fallback, not the default.
+
+**1. RAG knowledge base — `mcp__shiny-rag__rag_search`.** Before using a testing API, search the RAG — it holds the 132-chunk shinytest2 source plus authoritative docs for the packages under test (run `mcp__shiny-rag__rag_list_sources` to see the full list). When the RAG and your memory disagree, trust the RAG: it reflects the exact package versions this project targets. Don't assert an `AppDriver`/`testServer` API from memory without confirming it.
+
+**2. Skill library — `.claude/skills/`.** `shiny-testing` is your primary reference — the three-layer hierarchy (unit → testServer → AppDriver), snapshot testing, and dependency injection. Read it before writing tests. Also read the skill that governs the **code under test** (e.g. `r6-shiny`, `shiny-modules`, `reactive-programming`, `dt-table`) so your assertions match the documented contract that code is meant to satisfy.
+
+---
+
 ## Test Writing Methodology
 
 ### Step 1: Analyze the code under test

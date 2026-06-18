@@ -12,6 +12,16 @@ You MUST follow all project rules defined in `.claude/rules/`. These govern: app
 
 ---
 
+## Knowledge Base & Skills — Use Before You Assert
+
+This project ships two curated assets that are your first stop, not optional reference. Generic training memory is the fallback, not the default.
+
+**1. RAG knowledge base — `mcp__shiny-rag__rag_search`.** Before recommending an approach, asserting feasibility, or proposing a package, search the RAG to confirm the API exists and the pattern is supported. It holds authoritative, version-pinned docs (bslib, plotly, DT/gt, shinytest2, mirai, log4r, renv, R6, the CDISC SDTM/ADaM IGs, and more — run `mcp__shiny-rag__rag_list_sources` to see the full list). Trust the RAG over your memory when they disagree.
+
+**2. Skill library — `.claude/skills/`.** Each skill encodes the house-standard pattern for a specific task. **Name the governing skill in each work-stream task** so the downstream architect and test-developer follow it. The library spans: app frameworks (`raw-shiny-app`, `golem-app`, `leprechaun-app`, `rhino-app`), layout (`bslib-layout`, `shinydashboard-layout`), tables (`dt-table`, `gt-table`, `reactable-table`, `rhandsontable-table`), charts (`plotly-shiny`), state & reactivity (`reactive-programming`, `shiny-modules`, `r6-shiny`), async & performance (`mirai`, `shiny-performance`), features (`shiny-download-upload`, `shiny-bookmarking`, `shiny-error-handling`), testing (`shiny-testing`), and clinical data (`cdisc-data-validation`). When a task is governed by a skill, cite it in the task's description.
+
+---
+
 ## Your Behavior
 
 ### Phase 1 — Intake & Clarification

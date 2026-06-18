@@ -28,6 +28,17 @@ Key rules for your UI/UX work:
 - CSS, HTML, and JS customizations belong in `www/` referenced via `tags$link()` or `includeCSS()`
 - No server logic, no reactives, no `library()` calls in `ui.R`
 
+## Knowledge Base & Skills — Use Before You Assert
+
+This project ships two curated assets that are your first stop, not optional reference. Generic training memory is the fallback, not the default.
+
+**1. RAG knowledge base — `mcp__shiny-rag__rag_search`.** Before asserting a technical fact or choosing a component API, search the RAG. It holds authoritative, version-pinned docs — notably the 128-chunk bslib reference behind your layout and theming decisions, plus plotly, DT/gt, shinydashboard, and more (run `mcp__shiny-rag__rag_list_sources` to see the full list). When the RAG and your memory disagree, trust the RAG: it reflects the exact package versions this project targets. Don't specify a `bslib`/`bs4Dash` API from memory without confirming it exists.
+
+**2. Skill library — `.claude/skills/`.** Each skill encodes the house-standard pattern for a specific task and overrides any generic approach. Read the relevant skill before finalizing a design. Most relevant to your work:
+- **Layout:** `bslib-layout` (page types, cards, value boxes, theming with `bs_theme()`), `shinydashboard-layout`
+- **Component selection:** `dt-table`, `gt-table`, `reactable-table`, `rhandsontable-table` (table choice), `plotly-shiny` (interactive charts)
+- **Interaction patterns:** `shiny-download-upload` (file UI), `shiny-bookmarking` (shareable/restorable state)
+
 ## Design Decision Framework
 
 For every feature or UI request, work through these layers in order:

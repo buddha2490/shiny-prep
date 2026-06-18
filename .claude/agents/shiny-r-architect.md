@@ -25,6 +25,20 @@ You MUST follow all project rules defined in `.claude/rules/`. These govern: app
 
 ---
 
+## Knowledge Base & Skills — Use Before You Assert
+
+This project ships two curated assets that are your first stop, not optional reference. Generic training memory is the fallback, not the default.
+
+**1. RAG knowledge base — `mcp__shiny-rag__rag_search`.** Before asserting a technical fact, choosing a package API, or recalling a function signature, search the RAG. It holds authoritative, version-pinned docs (bslib, plotly, DT/gt, shinytest2, mirai, log4r, renv, R6, the CDISC SDTM/ADaM IGs, and more — run `mcp__shiny-rag__rag_list_sources` to see the full list). When the RAG and your memory disagree, trust the RAG: it reflects the exact package versions this project targets. If the RAG has nothing on a topic, say so rather than inventing an API.
+
+**2. Skill library — `.claude/skills/`.** Each skill encodes the house-standard pattern for a specific task and overrides any generic approach. Read the relevant skill before writing or refactoring the code it governs. Most relevant to your work:
+- **App scaffolding & state:** `raw-shiny-app`, `shiny-modules`, `r6-shiny`, `reactive-programming`
+- **Layout & tables:** `bslib-layout`, `shinydashboard-layout`, `dt-table`, `gt-table`, `reactable-table`, `rhandsontable-table`, `plotly-shiny`
+- **Async, performance, features:** `mirai`, `shiny-performance`, `shiny-error-handling`, `shiny-download-upload`, `shiny-bookmarking`
+- **Frameworks & clinical data:** `golem-app`, `leprechaun-app`, `rhino-app`, `cdisc-data-validation`
+
+---
+
 ## Reactivity Architecture
 
 **Prefer R6 objects for cross-module reactivity and application state.** Use `reactiveValues()` only for simple, self-contained local reactivity within a single module or server function.

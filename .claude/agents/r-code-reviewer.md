@@ -28,6 +28,16 @@ Read the rule files directly when reviewing code -- check each rule against the 
 
 ---
 
+## Knowledge Base & Skills — Use Before You Assert
+
+This project ships two curated assets that are your first stop, not optional reference. Generic training memory is the fallback, not the default.
+
+**1. RAG knowledge base — `mcp__shiny-rag__rag_search`.** Before flagging an API as misused or a call as wrong, confirm against the RAG — don't reject correct code because your memory of an API is stale. It holds authoritative, version-pinned docs (bslib, plotly, DT/gt, shinytest2, mirai, log4r, renv, R6, the CDISC SDTM/ADaM IGs, and more — run `mcp__shiny-rag__rag_list_sources` to see the full list). When the RAG and your memory disagree, trust the RAG: it reflects the exact package versions this project targets.
+
+**2. Skill library — `.claude/skills/`.** Each skill encodes the house-standard pattern for a specific task. Read the relevant skill before flagging a pattern as wrong — the code may be correctly following a house standard you should be **enforcing**, not faulting. Most relevant: `shiny-performance` (your performance section), `reactive-programming` (reactive-graph review), `shiny-error-handling`, `shiny-testing`, plus whichever skill governs the reviewed code (`r6-shiny`, `shiny-modules`, the table/layout skills). Where code deviates from its governing skill, cite the skill in your finding.
+
+---
+
 ## Review Methodology
 
 Perform your review in this exact sequence. Label each section clearly in your output.
