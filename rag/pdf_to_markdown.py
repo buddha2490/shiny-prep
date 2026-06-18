@@ -68,43 +68,39 @@ def parse_package_metadata(text: str) -> dict:
 def extract_toc_functions(text: str) -> list[str]:
     """Extract function names from the Table of Contents section.
 
-    TOC entries look like:
+    CRAN TOC entries are dotted-leader lines:
         function_name . . . . . . . . . . . . . . . . . . . . . 5
+
+    The page number may sit on the same line or wrap to the next, and a long
+    name may be split from its dotted leader across a line break
+    ("titlePanel\\n. . ."). Large manuals (e.g. shiny) also repeat a "Contents"
+    running header on each TOC page and carry an earlier stray "Contents" inside
+    the page-1 author/description block. So: anchor on the first "Contents" that
+    is actually followed by a dotted entry, read to the terminal "Index <page>"
+    line, and capture names independently of page-number placement.
     """
-    # Find the Contents section
-    contents_match = re.search(r"\nContents\n", text)
-    if not contents_match:
+    # Anchor on the first "Contents" immediately followed by a dotted TOC entry,
+    # skipping any stray "Contents" in the page-1 author/description block.
+    toc_start = None
+    for m in re.finditer(r"\nContents\n", text):
+        if re.match(r"\s*[A-Za-z][\w.\-]*\s+\.(?:\s*\.){2,}", text[m.end():m.end() + 120]):
+            toc_start = m.end()
+            break
+    if toc_start is None:
         return []
 
-    # Find the end of TOC — typically marked by "Index" entry or the first
-    # function documentation block
-    toc_start = contents_match.end()
-
-    # Look for the Index line in the TOC which marks its end
-    index_match = re.search(r"\nIndex\s+\d+\n", text[toc_start:])
-    if index_match:
-        toc_end = toc_start + index_match.end()
-    else:
-        # Fallback: take a reasonable chunk
-        toc_end = toc_start + 5000
-
+    # End at the terminal "Index\n<page>" line that closes the TOC.
+    end_match = re.search(r"\nIndex\s*\n\s*\d+", text[toc_start:])
+    toc_end = toc_start + (end_match.start() if end_match else 16000)
     toc_text = text[toc_start:toc_end]
 
-    # Parse TOC entries. In PyMuPDF extraction, dots have spaces: ". . . . ."
-    # and page numbers appear on the next line. Function names may also wrap.
+    # Capture each entry's name. `\s+` spans an optional line break, so names
+    # that wrapped away from their dotted leader still match; page numbers are
+    # ignored entirely (they vary between same-line and next-line).
     functions = []
-
-    # Match: function_name <space> <dots-with-spaces> \n page_num
-    # Also handles wrapped names like "tbl.Pool\n. . . .\n12"
-    for m in re.finditer(
-        r"^[ \t]*([\w][\w.\-]*(?:\s[\w.\-]+)?)\s+\.[\s.]+\n\s*(\d+)",
-        toc_text,
-        re.MULTILINE,
-    ):
+    for m in re.finditer(r"([A-Za-z][\w.\-]+)\s+\.[ .]{3,}", toc_text):
         name = m.group(1).strip()
-        # Clean trailing dots/spaces from name that may have been captured
-        name = re.sub(r"[\s.]+$", "", name)
-        if name.lower() != "index" and name not in functions:
+        if name not in ("Contents", "Index") and name not in functions:
             functions.append(name)
 
     return functions
