@@ -1,0 +1,15 @@
+# --- Python / RAG runtime artifacts ------------------------------------------
+# The RAG virtualenv is machine-specific; recreate it from rag/requirements.txt.
+rag/.venv/
+
+# Byte-compiled Python
+__pycache__/
+*.pyc
+
+# SQLite write-ahead-log / shared-memory sidecars (runtime only).
+# rag/rag.db itself IS tracked — it is the committed knowledge base.
+*.db-wal
+*.db-shm
+
+# --- macOS --------------------------------------------------------------------
+.DS_Store

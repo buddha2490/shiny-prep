@@ -1,0 +1,20 @@
+# RAG knowledge-base server dependencies.
+#
+# These are the direct, top-level dependencies imported by the rag/*.py scripts
+# (mcp_server.py, ingest.py, pdf_to_markdown.py, ig_to_markdown.py). torch,
+# transformers, and huggingface-hub are pulled in transitively by
+# sentence-transformers and are not listed here.
+#
+# Versions are pinned to the verified-working set in rag/.venv. Recreate with:
+#
+#     python3 -m venv rag/.venv
+#     rag/.venv/bin/python3 -m pip install -r rag/requirements.txt
+#
+# Recommended interpreter: Python 3.11-3.13 for the widest prebuilt-wheel
+# coverage (torch / sentence-transformers). The committed .venv runs 3.14, which
+# works but is bleeding-edge for ML wheels.
+
+sentence-transformers==5.5.1   # embedding model (all-MiniLM-L6-v2)
+numpy==2.4.6                    # vector math for cosine similarity
+mcp==1.27.2                     # Model Context Protocol server runtime
+PyMuPDF==1.27.2.3              # PDF parsing (imported as `fitz`)
