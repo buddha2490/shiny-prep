@@ -1,6 +1,8 @@
 # Error Messages
 
-Standard patterns for user-facing messages in R functions.
+Standard patterns for the *wording* of user-facing messages in R functions. For
+how errors are *caught, coded, logged, and surfaced* in a Shiny app, see
+[error-handling](error-handling.md); for the log itself, see [logging](logging.md).
 
 ## `stop()` — Fatal errors
 
