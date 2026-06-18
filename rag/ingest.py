@@ -63,6 +63,7 @@ def parse_qmd(text: str, source_file: str) -> list[dict]:
     current_headers: list[str] = ["", "", ""]  # h1, h2, h3
     current_content_lines: list[str] = []
     current_section = ""
+    in_code_fence = False
 
     def flush():
         nonlocal current_content_lines, current_section
@@ -82,7 +83,13 @@ def parse_qmd(text: str, source_file: str) -> list[dict]:
         current_content_lines = []
 
     for line in lines[content_start:]:
-        m = header_re.match(line)
+        # Track code fences — don't parse headers inside them
+        if line.strip().startswith("```"):
+            in_code_fence = not in_code_fence
+            current_content_lines.append(line)
+            continue
+
+        m = header_re.match(line) if not in_code_fence else None
         if m:
             flush()
             level = len(m.group(1))  # 1, 2, or 3
