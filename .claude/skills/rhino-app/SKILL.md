@@ -7,6 +7,8 @@ description: Auto-invoked when creating or modifying a rhino-based Shiny applica
 
 This skill governs all work within a **rhino** Shiny application (by Appsilon). Rhino enforces strict software engineering practices: modular architecture via `box::use()`, no `library()` or `source()` in app code, and a clear separation between view (Shiny) and logic (pure R) layers.
 
+> **App-entry exception:** the project "never `app.R`" rule applies to **raw** three-file apps only. Rhino owns a top-level `app.R` containing only `rhino::app()` (never edit it) and organizes code under `app/` — use the framework's structure; do not convert a rhino app to the three-file layout.
+
 ## When to Use Rhino
 
 - Enterprise applications requiring strict code organization

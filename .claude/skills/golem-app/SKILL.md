@@ -7,6 +7,8 @@ description: Auto-invoked when creating or modifying a golem-based Shiny applica
 
 This skill governs all work within a **golem** Shiny application. Golem apps are R packages — every golem project must be a valid, installable R package with DESCRIPTION, NAMESPACE, and roxygen2 documentation.
 
+> **App-entry exception:** the project "never `app.R`" rule applies to **raw** three-file apps only. Golem uses its own entry points (`R/app_ui.R`, `R/app_server.R`, `R/run_app.R`, and a thin top-level `app.R`) — use them as the framework intends; do not convert a golem app to the three-file layout.
+
 ## When to Use Golem
 
 - Production-grade applications that need package infrastructure

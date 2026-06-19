@@ -239,6 +239,32 @@ def init_db(db_path: str) -> sqlite3.Connection:
     return conn
 
 
+def delete_source(conn: sqlite3.Connection, source: str) -> int:
+    """Delete all chunks (and ingest-log rows) for a single source file.
+
+    The FTS triggers keep `chunks_fts` in sync on DELETE, so keyword search
+    stays consistent. Returns the number of chunk rows removed.
+    """
+    cur = conn.execute("DELETE FROM chunks WHERE source = ?", (source,))
+    removed = cur.rowcount
+    conn.execute("DELETE FROM ingest_log WHERE source = ?", (source,))
+    conn.commit()
+    return removed
+
+
+def reset_db(conn: sqlite3.Connection) -> int:
+    """Remove every chunk and ingest-log row, leaving the schema intact.
+
+    Use to rebuild the corpus from scratch (e.g. after editing many sources).
+    Returns the number of chunk rows removed.
+    """
+    cur = conn.execute("DELETE FROM chunks")
+    removed = cur.rowcount
+    conn.execute("DELETE FROM ingest_log")
+    conn.commit()
+    return removed
+
+
 def upsert_chunks(
     conn: sqlite3.Connection,
     chunks: list[dict],
@@ -282,10 +308,25 @@ def upsert_chunks(
 # Main
 # ---------------------------------------------------------------------------
 
-def ingest_file(filepath: str, conn: sqlite3.Connection, model: SentenceTransformer, model_name: str):
-    """Ingest a single QMD/MD file."""
+def ingest_file(
+    filepath: str,
+    conn: sqlite3.Connection,
+    model: SentenceTransformer,
+    model_name: str,
+    replace: bool = False,
+):
+    """Ingest a single QMD/MD file.
+
+    When `replace` is True, existing chunks for this source are deleted first so
+    an edited file fully replaces its old chunks (content-hash dedup otherwise
+    leaves stale chunks behind alongside the new ones).
+    """
     path = Path(filepath)
     print(f"Processing: {path.name}")
+    if replace:
+        removed = delete_source(conn, path.name)
+        if removed:
+            print(f"  Replaced: removed {removed} existing chunks for {path.name}")
     text = path.read_text(encoding="utf-8")
     chunks = parse_qmd(text, source_file=path.name)
     chunks = split_large_chunks(chunks, max_tokens=300)
@@ -301,12 +342,35 @@ def ingest_file(filepath: str, conn: sqlite3.Connection, model: SentenceTransfor
 
 def main():
     parser = argparse.ArgumentParser(description="Ingest documents into the RAG database")
-    parser.add_argument("path", help="File or directory to ingest")
+    parser.add_argument("path", nargs="?", help="File or directory to ingest "
+                        "(optional when using --purge-source)")
     parser.add_argument("--db", default=os.path.join(os.path.dirname(__file__), "rag.db"),
                         help="Path to SQLite database (default: rag/rag.db)")
     parser.add_argument("--model", default="all-MiniLM-L6-v2",
                         help="Sentence-transformers model name")
+    parser.add_argument("--replace-source", action="store_true",
+                        help="Delete each file's existing chunks before re-ingesting "
+                             "(clean replace of edited sources, avoids stale chunks)")
+    parser.add_argument("--reset", action="store_true",
+                        help="Wipe ALL chunks before ingesting (rebuild corpus from scratch)")
+    parser.add_argument("--purge-source", metavar="SOURCE", action="append", default=[],
+                        help="Delete all chunks for SOURCE (e.g. an orphaned file whose "
+                             "source no longer exists) and exit. Repeatable.")
     args = parser.parse_args()
+
+    # --- Purge-only mode: delete named sources, no model load, then exit ---
+    if args.purge_source:
+        conn = init_db(args.db)
+        for src in args.purge_source:
+            removed = delete_source(conn, src)
+            print(f"Purged {removed} chunks for source: {src}")
+        total = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+        print(f"\nDone. Total chunks in database: {total}")
+        conn.close()
+        return
+
+    if not args.path:
+        parser.error("a path is required unless --purge-source is given")
 
     model_name = args.model
     print(f"Loading model: {model_name}")
@@ -314,16 +378,20 @@ def main():
 
     conn = init_db(args.db)
 
+    if args.reset:
+        removed = reset_db(conn)
+        print(f"Reset: removed {removed} existing chunks\n")
+
     target = Path(args.path)
     if target.is_file():
-        ingest_file(str(target), conn, model, model_name)
+        ingest_file(str(target), conn, model, model_name, replace=args.replace_source)
     elif target.is_dir():
         files = sorted(target.glob("**/*.qmd")) + sorted(target.glob("**/*.md"))
         if not files:
             print(f"No .qmd or .md files found in {target}")
             sys.exit(1)
         for f in files:
-            ingest_file(str(f), conn, model, model_name)
+            ingest_file(str(f), conn, model, model_name, replace=args.replace_source)
     else:
         print(f"Path not found: {target}")
         sys.exit(1)

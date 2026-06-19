@@ -305,4 +305,4 @@ How do modules need to communicate?
 4. **Validate arguments** before entering the reactive graph (`is.data.frame()`, `is.reactive()`, `is.reactivevalues()`)
 5. **Keep server.R thin** — it wires modules together; logic lives inside the modules
 6. **Returning values from `moduleServer()`** is how modules communicate outward
-7. **`session$ns()`** in server is the equivalent of `ns()` in UI — use it for nested module calls
+7. **`session$ns()`** in server builds a namespaced id (the server-side equivalent of `ns()`) — use it for dynamically inserted UI and JS/custom-message targets. Do **NOT** use it for nested module **server** calls: pass the SHORT id (e.g. `mod_inner_server("header")`). `moduleServer()` auto-nests, so `session$ns()` would double-namespace.

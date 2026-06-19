@@ -7,6 +7,8 @@ description: Auto-invoked when creating or modifying a leprechaun-based Shiny ap
 
 This skill governs all work within a **leprechaun** Shiny application. Leprechaun is a **code generator, not a runtime dependency** — it scaffolds a Shiny app into a standard R package structure, then gets out of the way. Generated code belongs to your package with no runtime dependency on leprechaun itself.
 
+> **App-entry exception:** the project "never `app.R`" rule applies to **raw** three-file apps only. Leprechaun scaffolds a package with its own entry points (`R/ui.R`, `R/server.R`, `R/run.R`, and a thin top-level `app.R`) — use them as the framework intends; do not convert a leprechaun app to the three-file layout.
+
 ## When to Use Leprechaun
 
 - Package-based Shiny apps without the overhead of golem as a runtime dependency

@@ -18,15 +18,15 @@ Style, packages, naming, and file layout are enforced by project rules (`.claude
 Every function produces three artifacts:
 
 1. `R/<function_name>.R` — the function file with roxygen2 documentation
-2. `tests/test-<function_name>.R` — a self-contained testthat test file
+2. `tests/testthat/test-<function_name>.R` — a self-contained testthat test file
 3. **Validated execution** — both files sourced/run successfully
 
 ### Validation Sequence
 
 1. **Write** the function file to `R/`
 2. **Source** it in R to confirm it loads without errors
-3. **Write** the test file to `tests/`
-4. **Run** the tests: `Rscript -e 'testthat::test_file("tests/test-<name>.R")'`
+3. **Write** the test file to `tests/testthat/`
+4. **Run** the tests: `Rscript -e 'testthat::test_file("tests/testthat/test-<name>.R")'`
 5. **If any step fails:** read the error, fix the code, re-run from the failed step
 6. **Report** results — confirm what passed, flag anything that needed revision
 

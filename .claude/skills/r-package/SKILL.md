@@ -1,5 +1,5 @@
 ---
-name: r-package-development
+name: r-package
 description: R package development with devtools, testthat, and roxygen2. Use when the user is working on an R package, running tests, writing documentation, or building package infrastructure.
 metadata:
   author: Simon P. Couch (@simonpcouch)
@@ -7,6 +7,12 @@ metadata:
 ---
 
 # R package development
+
+> **⚠️ Project overrides (this repo's house style wins over the upstream skill below):**
+> - **Pipe:** use `%>%` (magrittr), **not** `|>`. This overrides the "Coding" guidance below — see the `r-style` rule.
+> - **Error/warning tests:** use `expect_error()` / `expect_warning()` (or `expect_snapshot()` only when you specifically want to capture full message text), **not** a blanket `expect_snapshot(error = TRUE)`. This overrides the "Testing" guidance below.
+> - **Formatting:** `air format` is optional; follow the tidyverse style in the `r-style` rule. Do not introduce it as a required step.
+> - Everything else in this skill (devtools commands, test layout in `tests/testthat/`, roxygen workflow) applies as written.
 
 ## Key commands
 

@@ -47,8 +47,10 @@ def parse_package_metadata(text: str) -> dict:
     if m:
         meta["package"] = m.group(1)
 
-    # Version
-    m = re.search(r"Version\s+(\S+)", text)
+    # Version — require a digit-led token so we skip prose like
+    # "A 'Bootstrap 4' Version of 'shinydashboard'" (the bs4Dash bug, where
+    # the bare \S+ grabbed "of"). CRAN version fields always start with a digit.
+    m = re.search(r"Version\s+(\d[\w.\-]*)", text)
     if m:
         meta["version"] = m.group(1)
 

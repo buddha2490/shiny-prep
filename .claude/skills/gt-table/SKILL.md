@@ -63,7 +63,7 @@ gt_tbl %>%
   fmt_percent(columns = pct_chg, decimals = 1) %>%
   fmt_currency(columns = cost, currency = "USD") %>%
   fmt_date(columns = visit_dt, date_style = "yMMMd") %>%
-  fmt_missing(columns = everything(), missing_text = "--")
+  sub_missing(columns = everything(), missing_text = "--")
 ```
 
 Use `columns = everything()` or `columns = where(is.numeric)` for tidy selection.
@@ -190,6 +190,6 @@ gtsave(gt_tbl, "table.rtf")
 - **gt is static** — it renders HTML but has no built-in sorting, filtering, or pagination; use DT or reactable when interactivity is needed
 - **`render_gt()` not `renderTable()`** — always use `render_gt()` / `gt_output()` pair in Shiny
 - **Column selection** — `columns` uses tidyselect: `c(col1, col2)`, `where(is.numeric)`, `starts_with("ae_")`; pass bare names not strings
-- **`fmt_missing()` order** — apply after other `fmt_*()` calls or it may be overridden
+- **`sub_missing()` order** — apply after other `fmt_*()` calls or it may be overridden (note: `fmt_missing()` is deprecated — use `sub_missing()`)
 - **Grouping requires grouped data** — pass a grouped data frame or use `groupname_col` argument to `gt()`; `summary_rows()` only works with groups
 - **Large tables in Shiny** — gt renders the entire table as HTML; for 1000+ rows, paginate upstream or switch to DT

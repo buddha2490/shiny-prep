@@ -42,7 +42,7 @@ mod_async_task_server <- function(id) {
         },
         should_fail = should_fail
       )
-    }) |>
+    }) %>%
       bslib::bind_task_button("run")
 
     observeEvent(input$run, {
