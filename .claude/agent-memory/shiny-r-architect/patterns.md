@@ -1,6 +1,13 @@
+---
+name: module-patterns
+description: Shiny module pattern cheat sheet — NS, returned reactives, shared rv, R6 bridge, nesting, dynamic
+type: pattern
+updated: 2026-06-18
+---
+
 # Shiny Module Patterns — Reference Notes
 
-Documented from `examples/03. modules/` build (2026-06-18).
+Documented from `examples/03. modules/` build (2026-06-18). Related: [[examples-built]], [[dt-masking]].
 
 ## Pattern 1: Basic Module
 - NS(id) in UI wraps ALL input/output IDs

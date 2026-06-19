@@ -30,7 +30,7 @@ Not every task needs all 5 pipeline steps. Small bug fixes can go straight to th
 ```
 .claude/
   agents/         # 6 specialized agents (5-step pipeline + shiny-debugger; see workflow)
-  agent-memory/   # per-agent persistent memory (one dir per agent)
+  agent-memory/   # per-agent persistent memory (one dir per agent); SCHEMA.md = shared structured-lite format
   rules/          # project-wide rules, always loaded into context
   skills/         # 23 auto-invoked skill files for specific tasks
 examples/

@@ -150,35 +150,27 @@ Examples of what to record:
 
 # Persistent Agent Memory
 
-You have a persistent Persistent Agent Memory directory at `/Users/briancarter/Rdata/shiny-prep/.claude/agent-memory/r-code-reviewer/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence). Its contents persist across conversations.
+You have a persistent, file-based memory directory at `/Users/briancarter/Rdata/shiny-prep/.claude/agent-memory/r-code-reviewer/`. It already exists — write to it directly with the Write tool (do not run mkdir or check for its existence). Its contents persist across conversations and are committed to version control, so tailor every memory to this project.
 
-As you work, consult your memory files to build on previous experience. When you encounter a mistake that seems like it could be common, check your Persistent Agent Memory for relevant notes — and if nothing is written yet, record what you learned.
+This repo standardizes **one** memory schema across all agents — the **structured-lite** layout. The canonical spec is `.claude/agent-memory/SCHEMA.md`; read it if anything below is unclear, and follow it exactly. In brief:
 
-Guidelines:
-- `MEMORY.md` is always loaded into your system prompt — lines after 200 will be truncated, so keep it concise
-- Create separate topic files (e.g., `debugging.md`, `patterns.md`) for detailed notes and link to them from MEMORY.md
-- Update or remove memories that turn out to be wrong or outdated
-- Organize memory semantically by topic, not chronologically
-- Use the Write and Edit tools to update your memory files
+- **`MEMORY.md` is an always-loaded index, not a store.** One line per topic file — `- [Title](file.md) — one-line hook` — with no frontmatter and no memory content. Keep it short; it is loaded into your system prompt every session.
+- **Topic files hold the actual memory**, grouped semantically (e.g. `patterns.md`, `conventions.md`, `codebase.md`), not chronologically. A topic file may hold several related facts and begins with frontmatter:
 
-What to save:
-- Stable patterns and conventions confirmed across multiple interactions
-- Key architectural decisions, important file paths, and project structure
-- User preferences for workflow, tools, and communication style
-- Solutions to recurring problems and debugging insights
+  ```markdown
+  ---
+  name: <kebab-slug>
+  description: <one-line summary — used to judge relevance when recalling>
+  type: pattern | convention | codebase-fact | pitfall | decision
+  updated: YYYY-MM-DD
+  ---
+  ```
 
-What NOT to save:
-- Session-specific context (current task details, in-progress work, temporary state)
-- Information that might be incomplete — verify against project docs before writing
-- Anything that duplicates or contradicts existing CLAUDE.md instructions
-- Speculative or unverified conclusions from reading a single file
+  Cross-link related files with `[[name]]` (the other file's `name:` slug); an unresolved link is fine — it marks a file worth writing later.
+- **Type vocabulary** (exactly one per file): `pattern` (a reusable how-to), `convention` (a house rule/standard this repo follows), `codebase-fact` (where something lives or what it does — R6 classes, utilities, module IO, `global.R` data), `pitfall` (a trap + how to avoid it — masking, ID mismatch, deprecated API), `decision` (an intentional choice + *why*).
 
-Explicit user requests:
-- When the user asks you to remember something across sessions (e.g., "always use bun", "never auto-commit"), save it — no need to wait for multiple interactions
-- When the user asks to forget or stop remembering something, find and remove the relevant entries from your memory files
-- When the user corrects you on something you stated from memory, you MUST update or remove the incorrect entry. A correction means the stored memory is wrong — fix it at the source before continuing, so the same mistake does not repeat in future conversations.
-- Since this memory is project-scope and shared with your team via version control, tailor your memories to this project
-
-## MEMORY.md
-
-Your MEMORY.md is currently empty. When you notice a pattern worth preserving across sessions, save it here. Anything in MEMORY.md will be included in your system prompt next time.
+Discipline:
+- Before writing, check for an existing topic file to extend — do not create duplicates.
+- Keep memory true: update or remove entries that turn out to be wrong or outdated. If the user corrects something you stated from memory, fix it at the source. If the user says to forget something, remove it.
+- Save on explicit request immediately (no need to wait for repetition). Do **not** save session-only state, unverified single-file guesses, or anything already covered by `CLAUDE.md` / `.claude/rules/`.
+- **Verify before recommending from memory:** a memory naming a file, function, or flag is a claim that it existed *when written*. Check the path exists / grep the symbol before acting on it, and prefer `git log` or current code over a frozen snapshot for questions about *current* state.
