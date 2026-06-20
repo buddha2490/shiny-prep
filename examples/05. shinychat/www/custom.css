@@ -1,0 +1,110 @@
+/* =============================================================================
+   custom.css — shinychat + ellmer reference app
+   Created: 2026-06-19
+   Purpose: Status badges, streaming animation, layout overrides, token display,
+            and markdown stream placeholder. All additions sit on top of the
+            bslib flatly bootswatch theme.
+   ============================================================================= */
+
+/* --- CSS custom properties -------------------------------------------------- */
+:root {
+  --sc-chat-bg:  #f8f9fa;
+  --sc-accent:   #18BC9C;   /* flatly teal — success color, also streaming state */
+  --sc-border:   #dee2e6;
+}
+
+/* --- Streaming / Idle status badge ------------------------------------------ */
+/* Used in Tab 1 (Basic Chat) and Tab 2 (Module Pattern) card headers.           */
+/* The badge is a pill that swaps CSS class between .status-idle and             */
+/* .status-streaming via a custom Shiny message handler (see www/status_badge.js)*/
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Idle state: neutral grey pill */
+.status-idle {
+  background: #f0f0f0;
+  color: #6c757d;
+}
+.status-idle .status-dot {
+  background: #adb5bd;
+}
+
+/* Streaming state: teal pill with pulsing dot */
+.status-streaming {
+  background: #d4edda;
+  color: #155724;
+}
+.status-streaming .status-dot {
+  background: #18BC9C;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1);   }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* --- Chat card body padding override --------------------------------------- */
+/* Remove default padding so chat_ui() fills flush to card edges.              */
+.chat-card-body {
+  padding: 0 !important;
+}
+
+/* --- Turn inspector DT: compact row height --------------------------------- */
+/* ID is namespaced: ns("turn_table") resolves to "advanced_ellmer-turn_table".  */
+#advanced_ellmer-turn_table .dataTable td {
+  font-size: 0.82rem;
+}
+
+/* --- Token summary card in control panel: right-align numbers -------------- */
+.token-summary-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--sc-accent);
+}
+
+/* --- Markdown stream placeholder text -------------------------------------- */
+/* When the output is empty, show placeholder via CSS attr(). The server sets   */
+/* data-placeholder on the container element.                                   */
+.shiny-markdown-stream:empty::after {
+  content: attr(data-placeholder);
+  color: #adb5bd;
+  font-style: italic;
+}
+
+/* --- Suggestion chip styling fix ------------------------------------------ */
+/* shinychat ships chip styles, but ensure they render visibly in flatly.       */
+.suggestion {
+  cursor: pointer;
+}
+
+/* --- Sidebar lock for Tab 5 Control Panel ---------------------------------- */
+/* Sidebar is always open on desktop for the control panel tab.                 */
+/* ID is namespaced: ns("control_panel_sidebar") = "control_panel-control_panel_sidebar". */
+@media (min-width: 768px) {
+  #control_panel-control_panel_sidebar .sidebar {
+    display: block !important;
+  }
+}
+
+/* --- Value box icon size override ------------------------------------------ */
+.bslib-value-box .value-box-showcase .bi {
+  font-size: 2rem;
+}
