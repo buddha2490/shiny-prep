@@ -1,9 +1,22 @@
 ---
 name: shiny-performance
-description: Auto-invoked when reviewing, profiling, or optimizing Shiny application performance. Governs the measure-first workflow, profiling tools (profvis, reactlog, shiny.tictoc), reactive graph optimization, caching strategy (bindCache, memoise, cachem), data layer performance (pool, dbplyr, arrow), async for blocking work (ExtendedTask, future), and anti-pattern detection.
+description: Auto-invoked when reviewing or optimizing Shiny application performance. The entry point for a perf review — governs the measure-first workflow, ROI ordering, reactive-graph optimization, data-layer performance (pool/dbplyr/arrow), UI-rendering and memory, plus the cross-cutting anti-pattern quick reference and review checklist. Defers the tool-heavy specializations to dedicated skills: shiny-profiling (profvis/reactlog/tictoc/loadtest), shiny-caching (bindCache/memoise/cachem), shiny-async (ExtendedTask/future).
 ---
 
 # Shiny Performance & Optimization
+
+This skill is the **entry point** for a performance review: the workflow, the
+order to fix things in, the reactive-graph and data-layer guidance, and the
+cross-cutting anti-pattern reference and checklist used to scan code. The
+tool-heavy phases live in focused sibling skills so they only load when needed:
+
+| Deep-dive | Skill | Covers |
+|-----------|-------|--------|
+| **Measure first** | `shiny-profiling` | profvis, reactlog, shiny.tictoc, shinyloadtest |
+| **Cache results** | `shiny-caching` | bindCache, cachem backends, memoise |
+| **Off-thread work** | `shiny-async` | ExtendedTask, future_promise (+ the `mirai` skill) |
+
+---
 
 ## The Performance Review Workflow
 
@@ -11,137 +24,28 @@ Always follow this sequence. Do not optimize without measuring.
 
 ```
 1. READ the code — understand the reactive graph structure
-2. DIAGNOSE — identify which category of problem is present
+2. DIAGNOSE — identify which category of problem is present (use shiny-profiling)
 3. PRIORITIZE — fix in ROI order (reactive graph > caching > data layer > async)
 4. MEASURE AGAIN — confirm the fix actually helped
 ```
 
 **ROI order for fixes:**
 
-| Priority | Category | Typical Gain |
-|----------|----------|-------------|
-| 1 | Reactive graph — over-invalidation, unnecessary re-renders | High |
-| 2 | Caching — expensive reactives re-computed with same inputs | High |
-| 3 | Data layer — loading too much data, wrong data format | Medium |
-| 4 | Async — blocking the R process for long computations | Medium |
-| 5 | UI rendering — large tables without pagination, excessive outputs | Low-Medium |
+| Priority | Category | Typical Gain | Where |
+|----------|----------|-------------|-------|
+| 1 | Reactive graph — over-invalidation, unnecessary re-renders | High | This skill |
+| 2 | Caching — expensive reactives re-computed with same inputs | High | `shiny-caching` |
+| 3 | Data layer — loading too much data, wrong data format | Medium | This skill |
+| 4 | Async — blocking the R process for long computations | Medium | `shiny-async` |
+| 5 | UI rendering — large tables without pagination, excessive outputs | Low-Medium | This skill |
 
 ---
 
-## Phase 1 — Profiling (Measure First)
+## Reactive Graph Optimization
 
-### profvis — R execution profiler
-
-Use `profvis` to find slow R code. It produces a flame graph that shows time spent per function call.
-
-```r
-# Profile a Shiny app interactively
-library(profvis)
-library(shiny)
-
-profvis({
-  runApp("path/to/app", port = 3838)
-})
-# Interact with the app for the slow scenario, then close the app.
-# The flame graph appears automatically.
-```
-
-**Reading the flame graph:**
-- **Wide bars** = slow (more time spent). These are the targets.
-- **Tall stacks** = deep call chains. Look at the widest bar at any depth.
-- **Repeated blocks** = the same function called many times — check if it should be cached.
-
-```r
-# Profile a specific function, not the full app
-p <- profvis({
-  for (i in 1:100) {
-    expensive_function(data)
-  }
-})
-print(p)
-```
-
-**What to look for in a Shiny profvis run:**
-- `renderPlot`, `renderTable`, `renderUI` appearing very wide → cache or reduce computation
-- Data loading functions (read_csv, dbGetQuery) inside reactive contexts → move to global.R or cache
-- dplyr chains that show `collect()` → data is being pulled from DB in full, push filtering down
-
----
-
-### reactlog — Reactive dependency graph visualizer
-
-Use `reactlog` to find over-invalidation: outputs re-rendering when they should not be.
-
-```r
-# In global.R or at the start of a dev session
-options(shiny.reactlog = TRUE)
-
-# Run the app, perform the scenario that feels slow, then:
-shiny::reactlogShow()
-```
-
-**Reading the reactlog:**
-- Each node is a reactive (`reactive()`, `render*()`, `observe()`, input).
-- Edges show dependencies — who reads whom.
-- **Flashes of orange** = invalidation events. Count how many times a node flashes per user interaction.
-- A node that flashes 5 times for one button click is invalidating too often.
-
-**Diagnosis patterns:**
-
-| What you see in reactlog | What it means | Fix |
-|--------------------------|--------------|-----|
-| Output re-renders on every keystroke | Input read directly in render without debounce | `debounce()` the input |
-| Many reactives invalidate from one input | Input has too many direct dependents | Extract an intermediate `reactive()` so work is shared |
-| A reactive invalidates but its value hasn't changed | No cache — same work done again | `bindCache()` |
-| Observer fires unexpectedly | `observe()` picks up unintended reactive reads | Switch to `observeEvent()` or add `isolate()` |
-
----
-
-### shiny.tictoc — JS-side render timing
-
-`shiny.tictoc` measures time from when Shiny sends a message to when the browser finishes rendering. This catches slow JS rendering (large DT tables, complex plotly charts) that `profvis` misses because profvis only measures R time.
-
-```r
-# In global.R
-library(shiny.tictoc)
-
-# Wraps all outputs automatically — no code changes needed.
-# Open browser console to see timing output:
-# [tictoc] output$my_table: 842ms
-```
-
-**Use shiny.tictoc when:**
-- profvis shows R is fast but the app still feels slow
-- Outputs with large JS payloads (DT with 10k+ rows, plotly with dense data)
-
----
-
-### shinyloadtest — Multi-user load testing
-
-Test how the app performs under concurrent users. Run this before deploying to production.
-
-```r
-# Step 1: Record a session
-library(shinyloadtest)
-record_session("http://localhost:3838", output_file = "recording.log")
-# Interact with the app normally, then close the browser.
-
-# Step 2: Replay with N concurrent users
-shinycannon("recording.log", "http://localhost:3838",
-            workers = 10, loaded_duration_minutes = 2)
-
-# Step 3: Analyze results
-df <- load_runs(".")
-shinyloadtest_report(df, "load_report.html")
-```
-
-**Interpret the report:** Look at `SESSION_DURATION` distribution. If p95 is much higher than p50, some users are waiting on shared resources (DB connections, in-memory data, single-threaded R).
-
----
-
-## Phase 2 — Reactive Graph Optimization
-
-This is almost always the highest-ROI fix. Before adding caching, verify the reactive graph is correct.
+This is almost always the highest-ROI fix. Before adding caching, verify the
+reactive graph is correct. (Diagnose over-invalidation with `reactlog` — see
+`shiny-profiling`.)
 
 ### Anti-pattern: reading inputs directly in outputs
 
@@ -242,139 +146,18 @@ output$results <- renderTable({
 })
 ```
 
----
-
-## Phase 3 — Caching Strategy
-
-### bindCache() — Cache reactive expressions and render outputs
-
-`bindCache()` stores the result of a reactive or render function keyed on one or more reactive expressions. When the key combination has been seen before, the cached value is returned immediately — no re-computation.
-
-```r
-# Cache a reactive() — app-level by default
-filtered_data <- reactive({
-  expensive_filter(data, input$group, input$param)
-}) %>% bindCache(input$group, input$param)
-
-# Cache a renderPlot — keyed on the data + plot settings
-output$plot <- renderPlot({
-  ggplot(filtered_data(), aes(x = visit, y = value)) +
-    geom_boxplot()
-}) %>% bindCache(filtered_data(), input$plot_type)
-```
-
-**Cache scope — critical for correctness:**
-
-```r
-# session scope (default for render*) — each user has their own cache
-# Use for: user-specific data, personalized views
-output$my_plot <- renderPlot({ ... }) %>%
-  bindCache(input$group, cache = "session")
-
-# app scope — cache shared across all users
-# Use for: expensive computations with the same inputs for all users
-# CAUTION: never use app-level cache for user-specific or sensitive data
-output$shared_plot <- renderPlot({ ... }) %>%
-  bindCache(input$group, cache = "app")
-```
-
-**Cache key design rules:**
-- Include **every** reactive input that affects the output
-- Include **nothing** that doesn't affect the output (adds unnecessary cache misses)
-- If the output depends on `filtered_data()`, use `filtered_data()` as the key (not its component inputs)
-
-```r
-# WRONG key — misses inputs, returns stale data when param changes
-output$table <- renderTable({ build_table(filtered_data()) }) %>%
-  bindCache(input$group)   # forgot input$param
-
-# CORRECT key — use the reactive that captures all dependencies
-output$table <- renderTable({ build_table(filtered_data()) }) %>%
-  bindCache(filtered_data())   # key is the full filtered result
-```
-
-**When to add bindCache():**
-- Computation takes >100ms
-- The same input combination is likely to be re-requested (user flips between tabs, revisits filters)
-- The output is deterministic (same inputs → same output)
-
-**When NOT to use bindCache():**
-- Output depends on the current time, random numbers, or external state that changes
-- App-level cache with user-specific data (privacy/security risk)
-- Computation is <10ms — caching overhead exceeds the benefit
+> For the full reactive-primitive mental model (`reactive` vs `observe` vs
+> `eventReactive`, invalidation, `isolate`), see the `reactive-programming` skill.
 
 ---
 
-### Custom cache backends with cachem
-
-```r
-# In global.R — configure the cache backend once
-
-# Memory cache with size limit (default is 512MB)
-mem_cache <- cachem::cache_mem(max_size = 256 * 1024^2)  # 256MB
-
-# Disk cache — survives app restarts
-disk_cache <- cachem::cache_disk(dir = "cache/")
-
-# Layered: check memory first (fast), fall back to disk (persistent)
-layered_cache <- cachem::cache_layered(
-  cachem::cache_mem(max_size = 128 * 1024^2),
-  cachem::cache_disk(dir = "cache/")
-)
-
-# Pass to bindCache
-output$plot <- renderPlot({ ... }) %>%
-  bindCache(input$group, cache = layered_cache)
-```
-
----
-
-### memoise() — Function-level memoization
-
-Use `memoise` for pure R functions called in reactive contexts. Unlike `bindCache`, `memoise` works outside Shiny's reactive system and persists across sessions when stored in `global.R`.
-
-```r
-# In global.R — memoized function shared across all sessions
-load_study_data <- memoise::memoise(
-  function(study_id) {
-    # Expensive: reads from DB or disk
-    DBI::dbGetQuery(con, glue::glue("SELECT * FROM data WHERE study = '{study_id}'"))
-  },
-  cache = memoise::cache_memory()   # default: in-memory
-)
-
-# Or with a disk cache for persistence across restarts
-load_study_data <- memoise::memoise(
-  function(study_id) { ... },
-  cache = memoise::cache_filesystem("cache/study-data/")
-)
-```
-
-```r
-# In server.R — call the memoized function like any other function
-filtered <- reactive({
-  req(input$study)
-  load_study_data(input$study) %>%   # returns cached result if seen before
-    filter(PARAM == input$param)
-})
-```
-
-**memoise vs bindCache:**
-
-| | `memoise` | `bindCache` |
-|--|-----------|-------------|
-| Works outside Shiny | Yes | No |
-| Integrates with reactive graph | No | Yes |
-| Cache invalidation | Manual (`forget()`) | Automatic (reactive key changes) |
-| Best for | Pure functions, data loading | reactive() and render*() |
-
----
-
-## Phase 4 — Data Layer Performance
+## Data Layer Performance
 
 ### pool — Database connection management
 
-Never create a database connection inside `server()`. Each user session would open a new connection, exhausting the database connection limit. Use `pool` in `global.R`.
+Never create a database connection inside `server()`. Each user session would
+open a new connection, exhausting the database connection limit. Use `pool` in
+`global.R`.
 
 ```r
 # global.R — one pool shared across all sessions
@@ -416,8 +199,6 @@ observeEvent(input$save, {
 })
 ```
 
----
-
 ### dbplyr — Push filtering to the database
 
 Never `collect()` a full table and then filter in R. Always filter before collecting.
@@ -438,15 +219,12 @@ filtered <- tbl(pool, "records") %>%
   collect()
 ```
 
-**Check the SQL being generated:**
 ```r
 # Use show_query() before collect() to verify the query
 tbl(pool, "records") %>%
   filter(category == input$category) %>%
   show_query()   # prints the SQL — verify indexes are being used
 ```
-
----
 
 ### arrow / Parquet — Fast file-based data
 
@@ -479,69 +257,7 @@ filtered <- data_ds %>%
 
 ---
 
-## Phase 5 — Async for Blocking Computations
-
-When a computation takes >1-2 seconds and cannot be cached (because the inputs vary too much), use async to avoid blocking other users. Shiny is single-threaded — one slow computation blocks everyone.
-
-### ExtendedTask (Shiny 1.8+ — preferred)
-
-```r
-# server.R
-run_analysis <- ExtendedTask$new(function(data, params) {
-  # This runs in a background process — does not block the Shiny session
-  future::future({
-    expensive_analysis(data, params)
-  }, seed = TRUE)
-}) %>% bslib::bind_task_button("run_btn")   # auto-manages button state
-
-observeEvent(input$run_btn, {
-  run_analysis$invoke(filtered_data(), list(alpha = input$alpha))
-})
-
-output$results <- renderTable({
-  run_analysis$result()   # reactive — updates when the task completes
-})
-```
-
-**ExtendedTask rules:**
-- The function passed to `$new()` must return a promise (wrap with `future::future()`)
-- `$invoke()` starts the task; `$result()` is a reactive that resolves when done
-- Use `bslib::bind_task_button()` to disable the button while running
-- One task runs at a time per `ExtendedTask` instance — queue multiple calls with separate instances
-
----
-
-### future_promise() — For older apps
-
-```r
-# global.R
-library(future)
-library(promises)
-plan(future.callr::callr, workers = 4)   # 4 background worker processes
-
-# server.R
-output$results <- renderTable({
-  req(input$run)
-  future_promise({
-    expensive_analysis(isolate(input$params))
-  }) %...>% (function(result) {
-    result   # promise resolves to the table data
-  })
-})
-```
-
-**future vs ExtendedTask decision:**
-
-| | `ExtendedTask` | `future_promise` |
-|--|----------------|-----------------|
-| Shiny version | 1.8+ | Any |
-| Syntax | OOP, explicit invoke | Promise chain |
-| Button integration | `bind_task_button()` | Manual |
-| Preferred for new code | Yes | No (legacy) |
-
----
-
-## Phase 6 — UI & Rendering Optimization
+## UI & Rendering Optimization
 
 ### Large tables — always use server-side processing
 
@@ -570,7 +286,8 @@ output$plot <- renderPlot({ ... })
 
 ### shinycssloaders / waiter — perceived performance
 
-Any output that takes >300ms should show a loading indicator. Perceived performance matters as much as actual performance.
+Any output that takes >300ms should show a loading indicator. Perceived
+performance matters as much as actual performance.
 
 ```r
 # Wrap outputs in UI — zero server changes needed
@@ -605,7 +322,8 @@ server <- function(input, output, session) {
 
 ## Memory Management
 
-Large R objects held in `global.R` or `reactiveValues` grow the process memory and trigger garbage collection pauses.
+Large R objects held in `global.R` or `reactiveValues` grow the process memory
+and trigger garbage collection pauses.
 
 ```r
 # Inspect object sizes during development
@@ -626,58 +344,61 @@ app_data <- arrow::read_parquet("data/app_data.parquet") %>%
 
 ## Anti-Pattern Quick Reference
 
-Scan code for these patterns during a performance review:
+Scan code for these patterns during a performance review. The "Fix" column points
+to where the remedy is detailed.
 
 | Anti-pattern | Symptom | Fix |
 |---|---|---|
-| Input read directly in `render*()` | Re-renders on every change of that input | Extract to `reactive()` |
-| Duplicate filtering in multiple outputs | Same `filter()` code in multiple `render*()` | Single shared `reactive()` |
-| `collect()` before `filter()` | Full table loaded into R | Reverse: filter then collect |
-| `dbGetQuery` inside `reactive()` with no cache | DB hit on every interaction | `memoise()` or `bindCache()` |
-| `server = FALSE` on DT with large data | Browser hangs | `server = TRUE` |
-| Text input → expensive computation, no debounce | Fires on every keystroke | `debounce(400)` |
-| DB connection created in `server()` | New connection per session | `pool::dbPool()` in `global.R` |
-| Long computation blocking the session | Other users wait | `ExtendedTask` |
-| `observe()` instead of `observeEvent()` | Observer fires unexpectedly | `observeEvent()` or `bindEvent()` |
-| No loading indicator on slow outputs | App feels broken | `withSpinner()` or `waiter` |
-| Heavy data prep inside `reactive()` | Repeated per user-interaction | Move to `global.R` or `memoise` |
-| `options(shiny.reactlog = TRUE)` left on in production | Memory overhead | Remove before deployment |
+| Input read directly in `render*()` | Re-renders on every change of that input | Extract to `reactive()` (this skill) |
+| Duplicate filtering in multiple outputs | Same `filter()` code in multiple `render*()` | Single shared `reactive()` (this skill) |
+| `collect()` before `filter()` | Full table loaded into R | Reverse: filter then collect (this skill) |
+| `dbGetQuery` inside `reactive()` with no cache | DB hit on every interaction | `memoise()`/`bindCache()` (`shiny-caching`) |
+| Reactive recomputes with unchanged inputs | Same work repeated | `bindCache()` (`shiny-caching`) |
+| `server = FALSE` on DT with large data | Browser hangs | `server = TRUE` (this skill) |
+| Text input → expensive computation, no debounce | Fires on every keystroke | `debounce(400)` (this skill) |
+| DB connection created in `server()` | New connection per session | `pool::dbPool()` in `global.R` (this skill) |
+| Long computation blocking the session | Other users wait | `ExtendedTask` (`shiny-async`) |
+| `observe()` instead of `observeEvent()` | Observer fires unexpectedly | `observeEvent()`/`bindEvent()` (this skill) |
+| No loading indicator on slow outputs | App feels broken | `withSpinner()` or `waiter` (this skill) |
+| Heavy data prep inside `reactive()` | Repeated per user-interaction | Move to `global.R` or `memoise` (`shiny-caching`) |
+| `options(shiny.reactlog = TRUE)` left on in production | Memory overhead | Remove before deployment (`shiny-profiling`) |
 
 ---
 
 ## Performance Review Checklist
 
-When asked to review or optimize performance, work through this list in order:
+When asked to review or optimize performance, work through this list in order.
+The deep-dive skill for each section is noted in parentheses.
 
-### Reactive graph
+### Reactive graph (this skill)
 - [ ] Are inputs read directly inside `render*()` without an intermediate `reactive()`?
 - [ ] Is the same filtering/transformation duplicated across multiple outputs?
 - [ ] Are `observe()` calls picking up unintended reactive reads? (use `observeEvent()` or `isolate()`)
 - [ ] Are text inputs driving expensive operations wrapped in `debounce()`?
 - [ ] Is `options(shiny.reactlog = TRUE)` set? (remove from production)
 
-### Caching
+### Caching (`shiny-caching`)
 - [ ] Are expensive reactives (>100ms) candidates for `bindCache()`?
 - [ ] Are data-loading functions called in reactive contexts candidates for `memoise()`?
 - [ ] Are cache keys correct — include everything that matters, exclude everything that doesn't?
 - [ ] Is app-level cache used for any user-specific or sensitive data? (security risk — must be session-level)
 
-### Data layer
+### Data layer (this skill)
 - [ ] Are DB queries issued from `server()` rather than a `pool` defined in `global.R`?
 - [ ] Is `collect()` called before `filter()`? (reverse it)
 - [ ] Are data files (CSV, Parquet, RDS) read with all columns when only a subset is needed?
 - [ ] For files >10MB, has Parquet been considered over CSV/RDS?
 
-### Async
+### Async (`shiny-async`)
 - [ ] Are there computations >1-2 seconds that cannot be cached?
 - [ ] Is the app single-user or multi-user? (blocking matters more for multi-user)
 - [ ] Has `ExtendedTask` been used for long-running server operations?
 
-### UI rendering
+### UI rendering (this skill)
 - [ ] Are large DT tables using `server = TRUE`?
 - [ ] Are slow outputs (>300ms) wrapped in `withSpinner()` or a waiter?
 - [ ] Are `renderPlot` outputs using `height = "auto"`? (causes double-render)
 
-### Memory
+### Memory (this skill)
 - [ ] Are large datasets trimmed to only needed columns in `global.R`?
 - [ ] Are large objects stored in `reactiveValues` when they could live in `global.R`?

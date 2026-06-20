@@ -34,7 +34,7 @@ This project ships two curated assets that are your first stop, not optional ref
 **2. Skill library — `.claude/skills/`.** Each skill encodes the house-standard pattern for a specific task and overrides any generic approach. Read the relevant skill before writing or refactoring the code it governs. Most relevant to your work:
 - **App scaffolding & state:** `raw-shiny-app`, `shiny-modules`, `r6-shiny`, `reactive-programming`
 - **Layout & tables:** `bslib-layout`, `shinydashboard-layout`, `dt-table`, `gt-table`, `reactable-table`, `rhandsontable-table`, `plotly-shiny`
-- **Async, performance, features:** `mirai`, `shiny-performance`, `shiny-error-handling`, `shiny-download-upload`, `shiny-bookmarking`
+- **Async, performance, features:** `mirai`, `shiny-performance` (+ `shiny-profiling`, `shiny-caching`, `shiny-async`), `shiny-error-handling`, `shiny-download-upload`, `shiny-bookmarking`
 - **Frameworks & clinical data:** `golem-app`, `leprechaun-app`, `rhino-app`, `cdisc-data-validation`
 
 ---

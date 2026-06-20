@@ -52,7 +52,7 @@ shipped:
 
 | # | Action | Status | Impact | Effort |
 |---|--------|--------|--------|--------|
-| 2 | **Split `shiny-performance` skill** — still 683 lines, loaded whole on any perf question. Break into `shiny-profiling` (profvis/reactlog/tictoc/loadtest), `shiny-caching` (bindCache/memoise/cachem), `shiny-async` (ExtendedTask/future/promises); keep the anti-pattern quick reference + checklist in the parent skill. | Not started | Less context waste | Low |
+| 2 | **Split `shiny-performance` skill** — was 683 lines, loaded whole on any perf question. Split into `shiny-profiling` (profvis/reactlog/tictoc/loadtest), `shiny-caching` (bindCache/memoise/cachem), `shiny-async` (ExtendedTask/future). Parent slimmed to 404 lines, kept as the perf-review entry point (workflow, ROI order, reactive-graph + data-layer + UI/memory optimization, anti-pattern quick reference, checklist) with a deep-dive map to the three children. Agent skill-lists updated. | ✅ Done 2026-06-20 | Less context waste | Low |
 | 3 | **Trim `raw-shiny-app` skill** — still 274 lines and re-states the three-file layout, directory structure, and `NS()`/`moduleServer()` pattern already covered by the `shiny-app-structure` rule and the `shiny-modules` skill. Keep only what's unique to raw apps (when to use vs. a framework, `R/` auto-sourcing, `www/`, config-without-framework, when to graduate, `rsconnect::deployApp()`). | Not started | Less context waste | Low |
 
 ### C. Automation
