@@ -59,7 +59,7 @@ shipped:
 
 | # | Action | Status | Impact | Effort |
 |---|--------|--------|--------|--------|
-| 6 | **Add a hooks configuration** — committed hook scripts in `.claude/hooks/`, activated per-machine via the gitignored `.claude/settings.local.json` (inform mode, trial). **Done:** (C) `test-reminder.sh` — PostToolUse on `R/mod_*`/`utils_*`/`fct_*` edits, feeds back the conventional testthat path + a full-suite reminder; (B) `renv-status.sh` — Stop hook, runs `renv::status()` (guarded so it only fires when an `.R` file is newer than `renv.lock`) and nudges to `renv::snapshot()` on drift. **Pending:** (A) post-edit `lintr::lint()` on R files — under discussion (needs `lintr` in renv; per-edit R-startup latency; inform vs block). | 🟡 B + C done 2026-06-20; A pending | Automated checks | Medium |
+| 6 | **Add a hooks configuration** — committed hook scripts in `.claude/hooks/`, activated per-machine via the gitignored `.claude/settings.local.json` (all inform mode; flip the final `jq` line to `decision:"block"` to enforce). (C) `test-reminder.sh` — PostToolUse on `R/mod_*`/`utils_*`/`fct_*` edits, feeds back the conventional testthat path + a full-suite reminder. (B) `renv-status.sh` — Stop hook, runs `renv::status()` (guarded: only when an `.R` file is newer than `renv.lock`) and nudges to `renv::snapshot()` on drift. (A) lint — `lint-record.sh` (PostToolUse) queues edited `.R` files; `lint-r.sh` (Stop) lints exactly that per-turn set in one R process and reports per the repo `.lintr`. Config is a curated, rule-aligned linter set; `object_name_linter` allows snake_case **and** UPPERCASE so CDISC vars (USUBJID/AVAL/SAFFL) pass; `lintr` pinned in `renv.lock` via the `tools/dev_dependencies.R` stub (keeps `renv::status()` clean). | ✅ Done 2026-06-20 | Automated checks | Medium |
 
 ### D. Examples (reference code + RAG-ingestible)
 
@@ -84,6 +84,6 @@ shipped:
 
 1. ~~**Quick wins:** model config, git rule, r-code trigger.~~ — done 2026-06-20.
 2. ~~**Context hygiene:** #2 and #3 (split/trim the oversized skills).~~ — done 2026-06-20.
-3. **Automation:** #6 (hooks) — pays off on every subsequent edit.
+3. ~~**Automation:** #6 (hooks) — pays off on every subsequent edit.~~ — done 2026-06-20.
 4. **The big build:** #9 (keystone app), which then feeds #12, alongside #7/#8.
 5. **RAG fill-in:** #10, #11, #13 as time allows.

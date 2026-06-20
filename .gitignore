@@ -18,3 +18,4 @@ __pycache__/
 # Machine-local hook activation + permission overrides. The hook SCRIPTS in
 # .claude/hooks/ ARE tracked; this file just toggles them on for one machine.
 .claude/settings.local.json
+.claude/.lint-queue
