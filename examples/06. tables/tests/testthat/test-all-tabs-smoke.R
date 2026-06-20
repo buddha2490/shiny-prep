@@ -68,44 +68,19 @@ test_that("every navbar tab opens and renders with a clean browser console", {
   app$click("rhot-save");  app$wait_for_idle(timeout = 10000L)
   app$click("rhot-reset"); app$wait_for_idle(timeout = 10000L)
 
-  # --- Assert: each tab's primary table output rendered WITHOUT error --------
-  # A render-time exception does NOT show up as a browser-console error and
-  # still leaves a non-empty container behind (the error <div>), so "got some
-  # HTML" is not enough — Shiny tags a failed output with class
-  # `shiny-output-error`. Assert that class is absent and the widget actually
-  # drew (its htmlwidget/table markup is present).
+  # --- Assert: nothing threw (the universal gate) ---------------------------
+  # Scans the captured Shiny stderr for render/runtime errors, checks for any
+  # `shiny-output-error` element, and asserts a clean browser console. See
+  # helper-shiny-smoke.R for why "console clean + non-empty HTML" is NOT enough.
+  expect_no_shiny_errors(app)
+
+  # --- Assert: each tab's primary table output positively rendered ----------
+  # Positive proof the widget actually drew (not just "container is non-empty").
   for (out in c("dt-tbl", "reactable-tbl", "gt-tbl", "rhot-tbl")) {
     html <- app$get_html(sprintf("#%s", out))
-    expect_false(
-      isTRUE(grepl("shiny-output-error", html %||% "")),
-      info = sprintf("Output '%s' rendered into an error state:\n%s", out, html)
-    )
     expect_true(
       !is.null(html) && nchar(html) > 50,
       info = sprintf("Output '%s' did not render any content", out)
     )
-  }
-
-  # Belt-and-braces: no output element anywhere is in an error state.
-  # get_html() returns NULL when the selector matches nothing.
-  any_error <- tryCatch(app$get_html(".shiny-output-error"),
-                        error = function(e) NULL)
-  expect_null(
-    any_error,
-    info = paste0("An output rendered into an error state:\n",
-                  any_error %||% "")
-  )
-
-  # --- Assert: the browser console logged no errors --------------------------
-  logs <- as.data.frame(app$get_logs())
-  if (nrow(logs) > 0 && "level" %in% names(logs)) {
-    console_errors <- logs$message[!is.na(logs$level) & logs$level == "error"]
-    expect_identical(
-      console_errors, character(0),
-      info = paste0("Browser console errors:\n",
-                    paste(console_errors, collapse = "\n"))
-    )
-  } else {
-    succeed("No structured console logs to inspect.")
   }
 })

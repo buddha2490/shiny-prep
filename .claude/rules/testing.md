@@ -72,14 +72,40 @@ which fails `validateIcon` and blocks startup).
 Therefore, for any app with **more than one tab / screen / major output**:
 
 1. **Ship a startup smoke test** (`AppDriver`) that launches the real app, visits
-   **every** nav panel / tab, and asserts the app logged **no `FATAL`/`ERROR`** and
-   the browser console has no errors. See
-   `examples/05. shinychat/tests/testthat/test-all-tabs-smoke.R` for the pattern.
-   This is cheap and broad — it does not assert features, only that nothing throws.
+   **every** nav panel / tab, **exercises each tab's primary interaction** (click
+   the button / change the input, then `wait_for_idle()` — a render error only
+   fires when its reactive actually executes), and then asserts **nothing threw**.
+   See `examples/06. tables/tests/testthat/test-all-tabs-smoke.R` +
+   `helper-shiny-smoke.R` for the canonical pattern. It is cheap and broad — it
+   does not assert features, only that nothing threw.
+
+   **"Nothing threw" must be a POSITIVE check, not the absence of a signal that
+   may not fire.** Two intuitive assertions are *false-pass traps*:
+   - ❌ "the browser console has no errors" — a Shiny **render** error
+     (`renderDT`/`render_gt`/`renderUI` throwing) is caught by Shiny and shown in
+     the output element; it is **never written to the browser console**.
+   - ❌ "the output element is non-empty" — a failed render leaves a non-empty
+     `shiny-output-error` `<div>` behind, so "got some HTML" passes while the
+     output is broken.
+
+   The signal that **does** fire on a render error is the app's **stderr**: Shiny
+   prints `Warning: Error in <fn>: ...`, which `shinytest2` captures in
+   `app$get_logs()` under `location == "shiny"`. Assert on all three:
+   1. **`app$get_logs()` has no `location == "shiny"` line matching `Error`** —
+      the universal catch; needs no output IDs or per-widget markers.
+   2. **No `.shiny-output-error` element exists** (`app$get_html(".shiny-output-error")`
+      returns `NULL`) — belt-and-braces in the DOM.
+   3. **No browser-console errors** (`level == "error"`) — catches client-side JS.
+   If the app uses the log4r logger, *also* assert the log has no `FATAL`/`ERROR`
+   (per [logging](logging.md)) — but never *instead* of the stderr scan, because a
+   render error that is not wrapped in `with_error_handling()` is shown, not logged.
+   `expect_no_shiny_errors(app)` in `helper-shiny-smoke.R` bundles 1–3; copy it in.
 2. **Do not let a single happy-path E2E test stand in for whole-app coverage.** A
    test that only loads the default tab gives false confidence: "all tests pass"
    while 4 of 5 tabs were never rendered. If a tab is too expensive to E2E fully,
-   it still gets the smoke visit in Rule 6.1.
+   it still gets the smoke visit in Rule 6.1. And a green smoke count proves
+   nothing if its assertions can't fail — when you write or change a gate, **break
+   the feature once and confirm the gate goes red**, then restore.
 3. **Guard external-dependency construction.** Anything built from a key/network/
    service (LLM client, DB pool, file handle) can return the `with_error_handling()`
    fallback (`NULL`). Modules must guard that NULL and fail with a clean message,

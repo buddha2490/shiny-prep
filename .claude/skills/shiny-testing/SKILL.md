@@ -232,6 +232,71 @@ test_that("Download button produces a non-empty CSV", {
 })
 ```
 
+### All-tabs smoke test — assert *nothing threw* (the no-dark-corners gate)
+
+For any app with more than one tab/screen, ship a smoke test that visits **every**
+tab, exercises each tab's primary interaction, and asserts the app threw nothing.
+The trap: a Shiny **render** error (`renderDT`/`render_gt`/`renderUI` throwing) is
+**not** written to the browser console and leaves a non-empty `shiny-output-error`
+`<div>` behind — so "console is clean" and "output is non-empty" are *false-pass
+traps*. The signal that **does** fire is the app's stderr, captured in
+`app$get_logs()` under `location == "shiny"`.
+
+```r
+# helper-shiny-smoke.R  (testthat auto-sources helper-*.R; runs in the test process)
+`%||%` <- function(a, b) if (is.null(a)) b else a
+
+expect_no_shiny_errors <- function(app) {
+  logs <- as.data.frame(app$get_logs())
+  have <- nrow(logs) > 0 && all(c("location", "message") %in% names(logs))
+
+  # 1. Shiny stderr — render/runtime errors land here even when they never reach
+  #    the browser console. The universal catch: no output IDs needed.
+  shiny_err <- if (have) {
+    logs$message[logs$location == "shiny" & grepl("Error( in |:)", logs$message)]
+  } else character(0)
+  testthat::expect_identical(shiny_err, character(0),
+    info = paste0("App logged Shiny errors:\n", paste(shiny_err, collapse = "\n")))
+
+  # 2. No output rendered into an error state (DOM).
+  dom_err <- tryCatch(app$get_html(".shiny-output-error"), error = function(e) NULL)
+  testthat::expect_null(dom_err,
+    info = paste0("An output is in an error state:\n", dom_err %||% ""))
+
+  # 3. Browser console errors (client-side JS).
+  if (have && "level" %in% names(logs)) {
+    console_err <- logs$message[!is.na(logs$level) & logs$level == "error" &
+                                  logs$location == "chromote"]
+    testthat::expect_identical(console_err, character(0),
+      info = paste0("Browser console errors:\n", paste(console_err, collapse = "\n")))
+  }
+  invisible(app)
+}
+```
+
+```r
+# test-all-tabs-smoke.R
+test_that("every tab opens and renders without throwing", {
+  app <- AppDriver$new(".", name = "all-tabs-smoke", seed = 42L)
+  on.exit(app$stop(), add = TRUE)
+
+  for (tab in c("Overview", "DT", "reactable", "gt")) {     # the navbar input id
+    app$set_inputs(nav = tab); app$wait_for_idle()
+  }
+  # Exercise each tab's primary interaction — a render error only fires when the
+  # reactive actually runs (e.g. a proxy update, a radio switch, a save click).
+  app$set_inputs(nav = "DT"); app$wait_for_idle()
+  app$click("dt-worsen");     app$wait_for_idle()
+
+  expect_no_shiny_errors(app)
+})
+```
+
+**Validate the gate itself:** when you write or change a smoke test, break the
+feature once and confirm the gate goes **red**, then restore. A green count from
+assertions that cannot fail is worthless (this is exactly how a `formatStyle()`
+crash shipped behind a "65 tests pass" smoke test that only checked the console).
+
 ### Input ID syntax for namespaced modules
 
 When the app uses modules, the input ID in `AppDriver` is `"module_id-input_id"`:
@@ -463,3 +528,8 @@ shinytest2::snapshot_review("tests/testthat")
 - [ ] Module input IDs use `"module_id-input_id"` syntax
 - [ ] Snapshots reviewed and committed intentionally — never auto-deleted
 - [ ] One flow per `test_that()` block — no mega-tests
+- [ ] Multi-tab app has an all-tabs smoke test that visits every tab AND exercises
+      each tab's primary interaction
+- [ ] Smoke test asserts on `app$get_logs()` `location == "shiny"` errors + absence
+      of `.shiny-output-error` — NOT just "console clean / output non-empty"
+- [ ] Gate validated: breaking the feature once makes the smoke test go red
