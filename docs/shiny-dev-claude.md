@@ -30,7 +30,8 @@ shipped:
 - **shiny-debugger agent** — added (now 6 agents).
 - **New rules** — error-handling, logging, cdisc-conventions, pharmaRTF-patterns.
 - **Examples** — modules (`03.`), plotly (`02.`), error-handling (`04.`),
-  shinychat (`05.`) all built, on top of the original async set (`01.`).
+  shinychat (`05.`), tables (`06.`) all built, on top of the original async
+  set (`01.`).
 - **renv** — initialized; lockfile committed; `.gitignore` hygiene done.
 
 ### Done 2026-06-20 (quick wins)
@@ -65,7 +66,7 @@ shipped:
 
 | # | Action | Status | Impact | Effort |
 |---|--------|--------|--------|--------|
-| 7 | **Table examples** — DT (proxy + editable), reactable (custom cell renderers), gt (publication: spanners/footnotes), rhandsontable (editable w/ save/reset). The table *skills* exist; worked apps do not. | Not started | Reference code | Medium |
+| 7 | **Table examples** — DT (proxy + editable), reactable (custom cell renderers), gt (publication: spanners/footnotes), rhandsontable (editable w/ save/reset). The table *skills* exist; worked apps do not. | ✅ Done 2026-06-20 — `examples/06. tables/`: 4-tab `page_navbar`, one tab/package, on shared synthetic CDISC data (ADSL/ADAE/ADLB + query log via seeded factories). DT = editable + proxy + Buttons + styleColorBar; reactable = groupBy + sparklines + custom renderers + expandable details + footers; gt = Table 1 (spanners/footnotes/row-groups) **and** AE summary (data_color/cols_merge/nanoplot), HTML export; rhandsontable = typed cells + validation + save/reset + CSV. `reactable`/`gt`/`rhandsontable`/`sparkline` installed + snapshotted. **70 tests pass** (0 fail/0 warn); all-tabs `AppDriver` smoke gate green. | Reference code | Medium |
 | 8 | **Layout examples** — bslib `page_sidebar` w/ cards, bslib `page_navbar`, bslib dashboard w/ value boxes, classic shinydashboard. | Not started | Reference code | Medium |
 | 9 | **Pharma keystone clinical app** — the v2 backlog #11 item. A realistic three-file app exercising patient listing, AE summary, lab shift plot, KM plot, and a forest plot on synthetic CDISC data. Doubles as the source for the pharma-pattern RAG doc (#12 below). | Not started | Domain reference | High |
 
