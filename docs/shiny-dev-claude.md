@@ -59,7 +59,7 @@ shipped:
 
 | # | Action | Status | Impact | Effort |
 |---|--------|--------|--------|--------|
-| 6 | **Add a hooks configuration** (`.claude/settings.json`) — there is currently no settings.json. Useful hooks: post-edit `lintr::lint()` on R files; a reminder to refresh `renv.lock` when an R file's `library()` set changes; a reminder to run associated tests after editing `R/mod_*.R` or `R/utils_*.R`. | Not started | Automated checks | Medium |
+| 6 | **Add a hooks configuration** — committed hook scripts in `.claude/hooks/`, activated per-machine via the gitignored `.claude/settings.local.json` (inform mode, trial). **Done:** (C) `test-reminder.sh` — PostToolUse on `R/mod_*`/`utils_*`/`fct_*` edits, feeds back the conventional testthat path + a full-suite reminder; (B) `renv-status.sh` — Stop hook, runs `renv::status()` (guarded so it only fires when an `.R` file is newer than `renv.lock`) and nudges to `renv::snapshot()` on drift. **Pending:** (A) post-edit `lintr::lint()` on R files — under discussion (needs `lintr` in renv; per-edit R-startup latency; inform vs block). | 🟡 B + C done 2026-06-20; A pending | Automated checks | Medium |
 
 ### D. Examples (reference code + RAG-ingestible)
 

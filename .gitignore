@@ -13,3 +13,8 @@ __pycache__/
 
 # --- macOS --------------------------------------------------------------------
 .DS_Store
+
+# --- Claude Code --------------------------------------------------------------
+# Machine-local hook activation + permission overrides. The hook SCRIPTS in
+# .claude/hooks/ ARE tracked; this file just toggles them on for one machine.
+.claude/settings.local.json
