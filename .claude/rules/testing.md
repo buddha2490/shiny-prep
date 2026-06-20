@@ -57,3 +57,42 @@ After any code change, run all tests. If failures occur:
 2. Attempt remediation and re-run
 3. Repeat up to **3 rounds total**
 4. After 3 rounds, stop. Report what failed, what was attempted, and surface the issue to the user — do not continue modifying code blindly
+
+## Rule 6 — Every tab/output gets runtime coverage (no dark corners)
+
+A passing `testServer()` test proves reactive *logic*; it does NOT prove an output
+renders or an observer survives its first flush in a real browser. A unit test on a
+helper proves the helper; it says nothing about the module that calls it. Many
+runtime failures live only in the wired, rendered app: an output that errors on
+render, an observer that crashes on first flush, a NULL/failed client cascading
+into a cryptic `object of type 'closure' is not subsettable`, a UI control passed
+the wrong object type (e.g. a `bsicons::bs_icon()` into `actionButton(icon=)`,
+which fails `validateIcon` and blocks startup).
+
+Therefore, for any app with **more than one tab / screen / major output**:
+
+1. **Ship a startup smoke test** (`AppDriver`) that launches the real app, visits
+   **every** nav panel / tab, and asserts the app logged **no `FATAL`/`ERROR`** and
+   the browser console has no errors. See
+   `examples/05. shinychat/tests/testthat/test-all-tabs-smoke.R` for the pattern.
+   This is cheap and broad — it does not assert features, only that nothing throws.
+2. **Do not let a single happy-path E2E test stand in for whole-app coverage.** A
+   test that only loads the default tab gives false confidence: "all tests pass"
+   while 4 of 5 tabs were never rendered. If a tab is too expensive to E2E fully,
+   it still gets the smoke visit in Rule 6.1.
+3. **Guard external-dependency construction.** Anything built from a key/network/
+   service (LLM client, DB pool, file handle) can return the `with_error_handling()`
+   fallback (`NULL`). Modules must guard that NULL and fail with a clean message,
+   not wire downstream reactives with a broken object. Cover the NULL path.
+
+## Rule 7 — Verify in the locked environment, the way it will be run
+
+Tests (and any smoke run) must execute against the **renv library**, not a stray
+session. Run from the project root with renv active
+(`source("renv/activate.R")`), e.g.
+`NOT_CRAN=true Rscript -e 'source("renv/activate.R"); setwd(<app>); library(shinytest2); source("global.R"); testthat::test_dir("tests/testthat")'`.
+Running an app from a long-lived REPL/IDE session that loaded packages before renv
+activated can resolve a dependency to a **different version** than `renv.lock` — the
+classic symptom is an error naming a symbol that does not exist in the locked
+package (e.g. an old DT internal). If a failure cannot be reproduced under a fresh
+renv-activated process, suspect environment drift before chasing a code bug.

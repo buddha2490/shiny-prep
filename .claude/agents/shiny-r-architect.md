@@ -158,7 +158,14 @@ When implementing any feature:
 4. **Implement** — Write code with full comments (including dates) and roxygen docs.
 5. **Test** — Write or update tests; run full suite.
 6. **Snapshot** — If packages changed, run `renv::snapshot()`.
-7. **Verify** — Self-review against all rules before delivering.
+7. **Run the real app** — Launch it in a fresh, renv-activated process and confirm
+   it boots **and every tab/screen renders**, not just that files parse/source.
+   `NOT_CRAN=true Rscript -e 'source("renv/activate.R"); shiny::runApp("<app>", launch.browser = FALSE, port = <p>)'`
+   (or an `AppDriver` session that visits each nav panel). A "smoke test" that only
+   sources `global.R` and parses `ui.R`/`server.R` does **not** count — it misses
+   every render-time and first-flush error. This is the Acceptance Gate in
+   `CLAUDE.md`; an implementation that has not been launched is not delivered.
+8. **Verify** — Self-review against all rules; report which surfaces you actually ran.
 
 ---
 

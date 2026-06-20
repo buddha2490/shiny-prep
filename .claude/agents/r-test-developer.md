@@ -147,11 +147,25 @@ For each feature or set of functions you test, deliver:
 2. **Updated roxygen tags** — show the updated documentation block inline with the function or as a diff
 3. **Test summary** — a brief list of what was tested and what was intentionally excluded (and why)
 4. **Run instructions** — the exact command to run the tests
+5. **All-tabs smoke test** — for any app with more than one tab/screen, an `AppDriver`
+   test that visits **every** nav panel and asserts the app log has no `FATAL`/`ERROR`
+   and the browser console is clean (`testing` rule 6). A happy-path E2E on one tab is
+   **not** whole-app coverage — the other tabs must be opened by *something*.
+6. **Honest coverage statement** — name the user-facing surfaces you actually exercised
+   in a running app versus those covered only by `testServer()`/unit tests or not at all.
+   A green pass count is not a coverage claim. If a module's value is a side effect you
+   chose not to unit test, that module still gets opened by the smoke test (5).
+
+Run everything from the repo root with renv active (`testing` rule 7), not a stray
+session — a dependency resolved to the wrong version produces failures that look like
+code bugs but are environment drift.
 
 ---
 
 ## Quality Checklist (self-verify before delivering)
 
+- [ ] The real app was **launched** and **every tab/screen opened** with no `FATAL`/`ERROR` in the log (all-tabs smoke test exists and passes)
+- [ ] Coverage reported honestly: which surfaces ran live vs. testServer-only vs. untested
 - [ ] Every non-trivial function has at least one happy-path test
 - [ ] Every `stop()` call has a corresponding `expect_error()` test
 - [ ] Every `warning()` call has a corresponding `expect_warning()` test

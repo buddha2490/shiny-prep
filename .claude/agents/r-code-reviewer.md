@@ -109,13 +109,32 @@ Evaluate how the change affects the rest of the application:
 - **Tests**: Do existing tests still pass conceptually given this change? Which test files need updating?
 - **UI consistency**: Does the UI match the style and layout conventions of existing panels/modules?
 
-### 5. VERDICT
-Issue one of three verdicts:
-- ✅ **APPROVED** — Code meets all standards. Ready to merge.
+### 5. RUNTIME VERIFICATION (mandatory — you are the last gate before the user)
+Static review does not catch render-time errors, first-flush observer crashes, a
+NULL client cascading into "object of type 'closure' is not subsettable", or a UI
+control handed the wrong object type. **You must confirm the app actually runs**
+before approving:
+
+- **Launch the real app in a fresh, renv-activated process** and confirm it boots
+  and **every tab/screen renders** (an `AppDriver` session visiting each nav panel,
+  asserting no `FATAL`/`ERROR` in the log — `testing` rules 6–7). If the project has
+  an all-tabs smoke test, run it and confirm it passes; if it is missing, that
+  absence is itself a REQUIRED CHANGE.
+- **Re-run after every fix you apply yourself.** If you change UI/wiring during the
+  review (even a "trivial" icon swap), you have NOT reviewed the result until you
+  relaunch — a fix that breaks startup is worse than the issue it solved.
+- Never approve on the strength of a green test count alone; a count is not a run.
+
+### 6. VERDICT
+Issue one of three verdicts. **You may not issue ✅ APPROVED without runtime evidence
+from step 5** (state what you launched and which surfaces you exercised). If you could
+not run it, the strongest verdict available is ⚠️ APPROVED WITH REQUIRED CHANGES,
+with "launch and exercise every surface" as a required item.
+- ✅ **APPROVED** — Meets all standards **and the running app was verified** (every surface). Ready to merge.
 - ⚠️ **APPROVED WITH REQUIRED CHANGES** — Specific issues must be fixed before merge. List each as a numbered action item.
 - ❌ **REJECTED** — Fundamental problems require a re-implementation. Explain clearly why and what the correct approach is.
 
-### 6. ENHANCEMENT SUGGESTIONS
+### 7. ENHANCEMENT SUGGESTIONS
 After the verdict, always provide a dedicated **Enhancements** section. These are optional improvements beyond the minimum bar — not blockers, but opportunities to make the code meaningfully better. Examples:
 - Refactor for reusability
 - Add caching with `bindCache()`

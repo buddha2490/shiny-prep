@@ -25,6 +25,32 @@ Plus a sixth, on-demand agent:
 
 Not every task needs all 5 pipeline steps. Small bug fixes can go straight to the architect (or the debugger if something is broken). But for new features, start with the planner. Each agent keeps persistent notes in `.claude/agent-memory/<agent-name>/`.
 
+### Definition of Done — the Acceptance Gate (non-negotiable)
+
+A feature is **not done because the code reads correctly and the unit tests pass.**
+It is done when **the actual application runs and every user-facing surface works.**
+Reading code, writing `testServer()` tests, and a green test count are all proxies —
+they have repeatedly passed while the real app crashed on first launch (a bad
+`actionButton(icon=)`, a NULL client cascading into "closure is not subsettable",
+a tab that errors on render). Before any feature is reported complete:
+
+1. **Launch the real app in a fresh, renv-activated process** — the way a user runs
+   it, not a sourced/parsed session. From the repo root:
+   `NOT_CRAN=true Rscript -e 'source("renv/activate.R"); shiny::runApp("<app>")'`.
+2. **Exercise every user-facing surface** — every tab/screen, not just the one the
+   headline feature lives on. An `AppDriver` all-tabs smoke test
+   (`testing` rule 6) is the cheap way: visit each nav panel, assert the app log has
+   no `FATAL`/`ERROR` and the browser console is clean.
+3. **Report coverage honestly** — state which surfaces were actually exercised and
+   which were not. "97 tests pass" is not a coverage statement; "all 5 tabs opened
+   clean, streaming verified end-to-end, export untested" is.
+4. **Re-run after every fix** — including fixes applied during code review. A fix is
+   not trusted until the app has been relaunched with it in place.
+
+This gate is owned by **r-test-developer** (builds the smoke coverage) and enforced
+by **r-code-reviewer** (cannot issue an "approved" verdict without evidence the app
+was launched and every surface exercised). See `.claude/rules/testing.md` rules 6–7.
+
 ## Key Directories
 
 ```

@@ -170,6 +170,49 @@ config <- config::get()
 data_path <- config$data_path
 ```
 
+## Startup Preflight (resist "works on my machine")
+
+The most common way a working app fails for someone else is **environment**, not
+code: a package isn't installed, a secret/env var isn't set, or a dependency
+resolves to a different version than was tested (the classic symptom is a cryptic
+`object 'X' not found` deep inside a package — a symbol that exists in one version
+but not another). Don't let these crash mid-flight with an opaque message. Run a
+**preflight** at the very top of `global.R`, before the `library()` calls, and
+turn each failure into a readable message.
+
+Keep the helper base-R only and make every check best-effort (skip what it can't
+verify) so it is portable across renv / packrat / Docker / Connect / a bare
+library — **do not hard-code an assumption about the deployment environment**.
+
+```r
+# global.R — FIRST thing, before library() calls
+source("R/utils_preflight.R")               # base-R only; safe pre-library
+
+REQUIRED_PACKAGES <- c("shiny", "bslib", "DT")        # single source of truth
+PREFLIGHT <- preflight(
+  packages = REQUIRED_PACKAGES,
+  env_vars = "DB_PASSWORD"                   # secrets the app needs at startup
+)
+if (length(PREFLIGHT) > 0) {
+  warning(paste(c("Startup preflight problems:", PREFLIGHT), collapse = "\n  "),
+          call. = FALSE)
+}
+for (pkg in REQUIRED_PACKAGES) {
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+}
+```
+
+Then in `server.R`, surface the findings to the user (blocking = `type="error"`,
+drift = `type="warning"`) so they see "package X is missing / restore your
+library" instead of a stack trace. A reference implementation lives in
+`examples/05. shinychat/R/utils_preflight.R` (checks installed packages, required
+env vars, and — if a lockfile is reachable — version drift, parsed via renv OR
+jsonlite OR skipped). Copy it verbatim and adjust the package/secret lists.
+
+This pairs with the Acceptance Gate (`CLAUDE.md`) and `testing` rules 6–7: the
+gate proves the app runs **in your environment**; the preflight tells the *next*
+environment exactly what it's missing.
+
 ## Testing
 
 ### testServer() for module logic
