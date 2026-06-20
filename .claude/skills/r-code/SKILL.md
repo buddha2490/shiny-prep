@@ -1,6 +1,6 @@
 ---
 name: r-code
-description: Auto-invoked when the user requests R code. Governs the write-source-test-validate workflow, artifact structure, and code templates for R development.
+description: Auto-invoked for any R code request. Governs the write-source-test-validate WORKFLOW and artifact/test structure. Defers Shiny domain patterns (modules, reactives, tables, layout) to the dedicated skills, which take precedence on those topics.
 ---
 
 # R Code Generation Skill
@@ -8,6 +8,8 @@ description: Auto-invoked when the user requests R code. Governs the write-sourc
 This skill governs the **workflow** for all R code generation. It is auto-invoked whenever the user requests R code.
 
 Style, packages, naming, and file layout are enforced by project rules (`.claude/rules/`) — they apply to every interaction, not just this skill. This skill defines *how code is produced and validated*.
+
+**Scope — workflow, not domain patterns.** This skill is the always-on backbone: it owns the write → source → test → validate loop and the artifact/test-file structure for *any* R code. It does **not** own Shiny domain patterns. When the work is Shiny-specific — modules (`shiny-modules`), reactivity (`reactive-programming`), tables (`dt-table`/`gt-table`/`reactable-table`/`rhandsontable-table`), layout (`bslib-layout`/`shinydashboard-layout`), async (`mirai`), error handling (`shiny-error-handling`), testing (`shiny-testing`), etc. — the dedicated skill takes precedence on the domain specifics. Apply this skill's workflow *around* whatever pattern that skill prescribes.
 
 ## Core Principle
 
