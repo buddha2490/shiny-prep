@@ -53,7 +53,7 @@ shipped:
 | # | Action | Status | Impact | Effort |
 |---|--------|--------|--------|--------|
 | 2 | **Split `shiny-performance` skill** — was 683 lines, loaded whole on any perf question. Split into `shiny-profiling` (profvis/reactlog/tictoc/loadtest), `shiny-caching` (bindCache/memoise/cachem), `shiny-async` (ExtendedTask/future). Parent slimmed to 404 lines, kept as the perf-review entry point (workflow, ROI order, reactive-graph + data-layer + UI/memory optimization, anti-pattern quick reference, checklist) with a deep-dive map to the three children. Agent skill-lists updated. | ✅ Done 2026-06-20 | Less context waste | Low |
-| 3 | **Trim `raw-shiny-app` skill** — still 274 lines and re-states the three-file layout, directory structure, and `NS()`/`moduleServer()` pattern already covered by the `shiny-app-structure` rule and the `shiny-modules` skill. Keep only what's unique to raw apps (when to use vs. a framework, `R/` auto-sourcing, `www/`, config-without-framework, when to graduate, `rsconnect::deployApp()`). | Not started | Less context waste | Low |
+| 3 | **Trim `raw-shiny-app` skill** — was 274 lines; re-stated the three-file layout, the `NS()`/`moduleServer()` pattern, package loading, and testing already owned by `shiny-app-structure`, `shiny-modules`, `r-style`, and `shiny-testing`. Trimmed to 164 lines: those sections replaced by a pointer table; kept only the raw-specific material (when to use vs. a framework, `R/` auto-sourcing, `www/`, config-without-framework, startup preflight, `rsconnect::deployApp()`, when to graduate). | ✅ Done 2026-06-20 | Less context waste | Low |
 
 ### C. Automation
 
@@ -83,7 +83,7 @@ shipped:
 ## Suggested order
 
 1. ~~**Quick wins:** model config, git rule, r-code trigger.~~ — done 2026-06-20.
-2. **Context hygiene:** #2 and #3 (split/trim the oversized skills).
+2. ~~**Context hygiene:** #2 and #3 (split/trim the oversized skills).~~ — done 2026-06-20.
 3. **Automation:** #6 (hooks) — pays off on every subsequent edit.
 4. **The big build:** #9 (keystone app), which then feeds #12, alongside #7/#8.
 5. **RAG fill-in:** #10, #11, #13 as time allows.
