@@ -1,0 +1,11 @@
+# Runtime / logging artifacts (logging rule 7)
+logs/
+*.log
+
+# shinytest2 / AppDriver debug artifacts
+tests/testthat/_snaps/*/*.new.*
+tests/testthat/*.new.png
+rsconnect/
+
+# OS cruft
+.DS_Store
