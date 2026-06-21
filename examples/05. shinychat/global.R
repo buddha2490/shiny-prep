@@ -15,7 +15,8 @@ source("R/utils_preflight.R")
 
 REQUIRED_PACKAGES <- c(
   "shiny", "bslib", "bsicons", "shinychat", "ellmer", "coro",
-  "DT", "R6", "log4r", "promises", "scales"
+  "DT", "R6", "log4r", "promises", "scales",
+  "ragnar", "duckdb", "dbplyr"   # Tab 6: ragnar RAG store backend
 )
 
 PREFLIGHT <- preflight(
@@ -49,6 +50,7 @@ source("R/mod_module_pattern.R")
 source("R/mod_markdown_stream.R")
 source("R/mod_advanced_ellmer.R")
 source("R/mod_control_panel.R")
+source("R/mod_rag_chat.R")
 
 # --- Initialise logger ------------------------------------------------------
 # One logger for the whole app. Threshold from LOG_LEVEL env var (default INFO).

@@ -121,4 +121,11 @@ server <- function(input, output, session) {
     app_state = app_state
   )
 
+  # Tab 6: RAG Chat --- [2026-06-20]
+  # Self-contained: creates its own store connection and ellmer client
+  # internally. No shared state passed in — the RAG client must have the
+  # retrieval tool registered exclusively, so it cannot share the AppState
+  # client used by other tabs.
+  mod_rag_chat_server("rag_chat")
+
 }

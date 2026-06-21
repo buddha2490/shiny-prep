@@ -2,7 +2,7 @@
 name: shinychat-patterns
 description: Testing patterns for shinychat + ellmer apps — DOM submission, shinytest2 runner, reactive context pitfalls discovered in examples/05. shinychat/
 type: pattern
-updated: 2026-06-19
+updated: 2026-06-20
 ---
 
 ## shinychat chat_ui() submission via AppDriver
@@ -67,7 +67,12 @@ The mock chat object needs `get_model()`, `get_system_prompt()`, `set_turns()`, 
 
 ## testServer() renderUI output access
 
-In `testServer()`, `output$id` for a `renderUI()` returns a list, not an HTML string. Access the HTML via `output$id[[1]]` then `as.character()`.
+In `testServer()`, `output$id` for a `renderUI()` returns a **named list** with two elements:
+- `$html` — the rendered HTML as an `html`/`character` vector
+- `$deps`  — HTML dependencies list
+
+Access HTML with `as.character(output$id$html)`, NOT `output$id[[1]]`.
+Confirmed in bslib 0.9.0 / shiny 1.11.1 under renv.
 
 ## with_error_handling() in unit tests
 

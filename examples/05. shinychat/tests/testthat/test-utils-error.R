@@ -162,3 +162,46 @@ test_that("with_error_handling works with a complex multi-line expression", {
 test_that("notify_error does not throw when session is NULL", {
   expect_no_error(notify_error("ERR-LLM-001", new_incident_id(), session = NULL))
 })
+
+# =============================================================================
+# ERR-RAG-001 and ERR-RAG-002 (Tab 6 RAG Chat codes)
+# =============================================================================
+# These codes were added to .error_catalog alongside the mod_rag_chat.R module.
+# The existing loop test (error_user_message returns a non-empty string for
+# every registered code) already covers them implicitly, but we add explicit
+# assertions here so a refactoring that removes or renames either code fails
+# loudly rather than silently regressing to the generic ERR-UNKNOWN-000 message.
+
+test_that("ERR-RAG-001 resolves to ERROR severity and a non-empty user message", {
+  # Severity
+  expect_equal(error_severity("ERR-RAG-001"), "ERROR")
+  # User message: non-empty and references the store
+  msg <- error_user_message("ERR-RAG-001")
+  expect_type(msg, "character")
+  expect_gt(nchar(msg), 0L)
+  expect_match(msg, "knowledge store", ignore.case = TRUE)
+})
+
+test_that("ERR-RAG-002 resolves to ERROR severity and a non-empty user message", {
+  # Severity
+  expect_equal(error_severity("ERR-RAG-002"), "ERROR")
+  # User message: non-empty and references retrieval (mode-neutral wording —
+  # the default BM25 mode needs no embedding provider, so the message must not
+  # hard-assume Ollama).
+  msg <- error_user_message("ERR-RAG-002")
+  expect_type(msg, "character")
+  expect_gt(nchar(msg), 0L)
+  expect_match(msg, "retrieval", ignore.case = TRUE)
+})
+
+test_that("ERR-RAG-001 user message does not fall back to the generic unknown message", {
+  generic <- error_user_message("ERR-UNKNOWN-000")
+  rag_msg <- error_user_message("ERR-RAG-001")
+  expect_false(identical(rag_msg, generic))
+})
+
+test_that("ERR-RAG-002 user message does not fall back to the generic unknown message", {
+  generic <- error_user_message("ERR-UNKNOWN-000")
+  rag_msg <- error_user_message("ERR-RAG-002")
+  expect_false(identical(rag_msg, generic))
+})

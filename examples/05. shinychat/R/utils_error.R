@@ -38,7 +38,14 @@
   "ERR-LLM-002"    = list(user = "Structured output could not be parsed.",                                 severity = "ERROR"),
   "ERR-LLM-003"    = list(user = "Markdown stream failed to generate.",                                    severity = "ERROR"),
   "ERR-APP-999"    = list(user = "An unexpected error occurred. Please contact support.",                  severity = "FATAL"),
-  "ERR-UNKNOWN-000"= list(user = "An unexpected error occurred.",                                          severity = "ERROR")
+  "ERR-UNKNOWN-000"= list(user = "An unexpected error occurred.",                                          severity = "ERROR"),
+  # --- RAG Chat (Tab 6) catalog codes --- [2026-06-20]
+  # ERR-RAG-001: store file missing or unreadable — direct user to the build script.
+  # ERR-RAG-002: retrieval failed at query time. In the default BM25 mode this
+  #   points to a store/index problem; in semantic (vss) mode it most often
+  #   means the embedding provider (e.g. Ollama) is unreachable.
+  "ERR-RAG-001"    = list(user = "The knowledge store could not be loaded. Run scripts/build_ragnar_store.R to rebuild it.", severity = "ERROR"),
+  "ERR-RAG-002"    = list(user = "Retrieval failed. If using semantic search mode, ensure the embedding provider is reachable; otherwise rebuild the store with scripts/build_ragnar_store.R.", severity = "ERROR")
 )
 
 #' Safe user-facing message for a catalog code (falls back to the generic one).

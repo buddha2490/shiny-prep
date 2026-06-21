@@ -3,10 +3,12 @@
 A reference Shiny app exercising the full **shinychat** + **ellmer** API surface,
 backed by the Anthropic Claude API. Built to be copied from, not deployed.
 
-Five tabs: Basic Chat (token-by-token streaming), Module Pattern
+Six tabs: Basic Chat (token-by-token streaming), Module Pattern
 (`chat_mod_server()` + its returned reactives), Markdown Stream
 (`output_markdown_stream()`), Advanced ellmer (tool calling, structured output,
-turn inspector), and Control Panel (model/params, token usage, export, reset).
+turn inspector), Control Panel (model/params, token usage, export, reset), and
+RAG Chat (ragnar embedded DuckDB store + ellmer retrieval tool + citations
+accordion; BM25 keyword retrieval by default — zero system dependencies).
 
 ## Running it — read this first
 
@@ -36,7 +38,33 @@ NOT_CRAN=true Rscript -e 'source("renv/activate.R"); shiny::runApp("examples/05.
 - `ANTHROPIC_API_KEY` set (environment or `.Renviron`). The app builds an ellmer
   client at startup; without the key it shows a clean "client unavailable" notice.
 - Packages from `renv.lock`: `shinychat`, `ellmer`, `coro`, `bsicons`, `DT`,
-  `bslib` (+ the usual `shiny`, `log4r`, `promises`, `scales`, `R6`).
+  `bslib` (+ the usual `shiny`, `log4r`, `promises`, `scales`, `R6`,
+  `ragnar`, `duckdb`, `dbplyr`).
+- **Tab 6 (RAG Chat):** build the knowledge store once. The default mode is
+  **BM25 / full-text retrieval with zero system dependencies** — no embedding
+  model, no Ollama, no Python, no API key, no network. DuckDB is embedded
+  (in-process, like SQLite), so there is no database server to install. Just
+  the `renv` library:
+  ```bash
+  NOT_CRAN=true Rscript \
+    -e 'source("renv/activate.R")' \
+    -e 'source("examples/05. shinychat/scripts/build_ragnar_store.R")'
+  ```
+  If the store is absent, Tab 6 degrades cleanly with an instructional banner;
+  all other tabs are unaffected.
+
+  **Optional — semantic (vector) retrieval.** For conceptual/paraphrase
+  matching, rebuild with `RAG_RETRIEVAL_MODE=vss`. This needs an embedding
+  provider at build *and* run time (ragnar embeds each query). Locally that is
+  Ollama (`ollama serve` + `ollama pull nomic-embed-text`); in production,
+  point ragnar's `embed_*()` at a managed endpoint your environment already
+  runs (`embed_azure_openai`, `embed_bedrock`, `embed_databricks`, or
+  `embed_openai(base_url = ...)`) so there is still no local daemon to install.
+  ```bash
+  RAG_RETRIEVAL_MODE=vss NOT_CRAN=true Rscript \
+    -e 'source("renv/activate.R")' \
+    -e 'source("examples/05. shinychat/scripts/build_ragnar_store.R")'
+  ```
 
 ## Tests
 

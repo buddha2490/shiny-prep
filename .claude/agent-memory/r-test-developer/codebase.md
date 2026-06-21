@@ -2,7 +2,7 @@
 name: codebase
 description: Project structure facts for r-test-developer — where things live, test runner commands, key utilities
 type: codebase-fact
-updated: 2026-06-19
+updated: 2026-06-20
 ---
 
 ## Project layout
@@ -47,5 +47,28 @@ NOT_CRAN=true Rscript -e "
 - ERR-CALC-001: Calculation error (turn parsing, token summary)
 - ERR-IO-001: Export failure
 - ERR-APP-999: Fatal startup error
+- ERR-RAG-001: RAG store (DuckDB) unavailable — direct user to build_ragnar_store.R (Tab 6)
+- ERR-RAG-002: ragnar_retrieve() failed at query time — Ollama not running (Tab 6)
+
+## bslib::accordion_panel() value= requirement (bslib 0.9.0)
+
+`accordion_panel(title = <shiny.tag>, ...)` FAILS with "`value` must be a character string"
+because `value` defaults to `title` and cannot coerce a tag to character.
+Fix: always pass `value = <explicit_character_string>` when title is a tag object.
+This was a bug in mod_rag_chat.R (fixed 2026-06-20 — added `value = origin`).
+
+## bslib::accordion() auto-increments element IDs
+
+Each call to `bslib::accordion()` generates auto-incremented element IDs (`bslib-accordion-NNN`).
+Do NOT use `expect_equal()` on two separately-rendered accordions — the IDs will differ.
+Assert content (e.g., origin strings, ellipsis presence) via `grepl()` instead.
+
+## testServer() accessing an unregistered output
+
+If the module's server function returns early (e.g., degradation guard), outputs registered
+AFTER the early return are never defined. Attempting `output$that_output` in `testServer()`
+throws "The test referenced an output that hasn't been defined yet: output$<ns>-<id>".
+Use `tryCatch(output$id, error = function(e) conditionMessage(e))` and assert the
+"hasn't been defined" string to verify the early-return fired (rather than `expect_no_error`).
 
 See [[shinychat-patterns]] for testing patterns.

@@ -31,8 +31,8 @@ ui <- bslib::page_navbar(
   ),
   id       = "main_nav",
   theme    = app_theme,
-  # Only the two chat tabs need viewport fill — others are fluid content pages
-  fillable = c("Basic Chat", "Module Pattern"),
+  # Chat tabs and RAG Chat need viewport fill — others are fluid content pages
+  fillable = c("Basic Chat", "Module Pattern", "RAG Chat"),
   navbar_options = bslib::navbar_options(class = "bg-primary", theme = "dark"),
 
   # Load custom CSS and JavaScript
@@ -55,6 +55,9 @@ ui <- bslib::page_navbar(
 
   # --- Tab 5: Control Panel ------------------------------------------------
   mod_control_panel_ui("control_panel"),
+
+  # --- Tab 6: RAG Chat -----------------------------------------------------
+  mod_rag_chat_ui("rag_chat"),
 
   # --- Navbar right: version badge -----------------------------------------
   bslib::nav_spacer(),

@@ -1,0 +1,9 @@
+# The ragnar DuckDB store IS committed: in the default BM25/FTS mode it is a
+# small (~4.5 MB), deterministic, zero-dependency artifact, so committing it
+# makes the example turnkey — clone, renv::restore(), run, with no build step
+# and no external services. scripts/build_ragnar_store.R remains the recipe to
+# regenerate it (or to build the larger semantic 'vss' variant).
+#
+# Only DuckDB's transient write-ahead / temp files are ignored.
+data/*.duckdb.wal
+data/*.duckdb.tmp/

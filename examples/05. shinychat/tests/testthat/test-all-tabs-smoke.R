@@ -30,10 +30,16 @@ testthat::skip_if(
 APP_DIR  <- file.path("..", "..")
 LOG_FILE <- file.path(APP_DIR, "logs", "shinychat-app.log")
 
-# All five nav panels, by their `value` (set in ui.R) / label.
+# All six nav panels, by their `value` (set in ui.R) / label.
+# "RAG Chat" (Tab 6) is included here. Opening the tab does NOT require Ollama —
+# Ollama is only needed at retrieve time, i.e. after the user submits a query.
+# If the store file (data/shiny_kb.duckdb) is absent the tab renders its
+# degradation banner and logs a WARN — not a FATAL/ERROR — so the smoke
+# assertion (no FATAL/ERROR in the log) still passes. The smoke test is therefore
+# safe to run regardless of whether the store file exists.
 ALL_TABS <- c(
   "Basic Chat", "Module Pattern", "Markdown Stream",
-  "Advanced ellmer", "Control Panel"
+  "Advanced ellmer", "Control Panel", "RAG Chat"
 )
 
 # --- Helper: lines appended to the app log since a recorded baseline ----------
@@ -64,6 +70,9 @@ test_that("every navbar tab opens without logging a FATAL or ERROR", {
   }
 
   # --- Assert: no FATAL/ERROR lines were appended to the app log -------------
+  # This catches anything routed through the log4r logger (e.g. errors caught by
+  # with_error_handling()). It does NOT catch a raw render error that is shown
+  # but never logged — expect_no_shiny_errors() below covers that gap.
   new_lines <- log_lines_since(baseline)
   bad <- grep("FATAL|ERROR", new_lines, value = TRUE)
   expect_identical(
@@ -74,17 +83,10 @@ test_that("every navbar tab opens without logging a FATAL or ERROR", {
     )
   )
 
-  # --- Assert: the browser console logged no errors --------------------------
-  logs <- as.data.frame(app$get_logs())
-  if (nrow(logs) > 0 && "level" %in% names(logs)) {
-    console_errors <- logs$message[!is.na(logs$level) & logs$level == "error"]
-    expect_identical(
-      console_errors, character(0),
-      info = paste0(
-        "Browser console errors:\n", paste(console_errors, collapse = "\n")
-      )
-    )
-  } else {
-    succeed("No structured console logs to inspect.")
-  }
+  # --- Assert: nothing threw (the universal gate) ----------------------------
+  # Scans Shiny stderr (app$get_logs() location == "shiny") for render/runtime
+  # errors, checks for any shiny-output-error element, and asserts a clean
+  # browser console. See helper-shiny-smoke.R for why the log + console checks
+  # above are not sufficient on their own.
+  expect_no_shiny_errors(app)
 })
