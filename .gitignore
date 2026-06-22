@@ -19,3 +19,5 @@ __pycache__/
 # .claude/hooks/ ARE tracked; this file just toggles them on for one machine.
 .claude/settings.local.json
 .claude/.lint-queue
+
+.vscode/

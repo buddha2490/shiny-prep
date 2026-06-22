@@ -1,0 +1,7 @@
+# Reproducible app — all data is generated in-memory in global.R under a fixed
+# seed, so there are no data artifacts to commit. These are the usual local-run
+# leftovers.
+.Rproj.user/
+rsconnect/
+tests/testthat/_snaps/*/*.new.*
+*.Rproj

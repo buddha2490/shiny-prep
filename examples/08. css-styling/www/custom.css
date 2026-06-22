@@ -1,0 +1,187 @@
+/* =============================================================================
+   custom.css — CSS Styling Reference Showcase
+   Created: 2026-06-22
+   Purpose: The single external stylesheet for this reference app (Rule 1). It
+            holds every app-specific component style that does not belong in the
+            theme (Rule 8) or a Bootstrap utility class (Rule 3): summary cards,
+            status indicators, the data-bound percent bar's static parts, the
+            grade chip, and the two namespaced module rules.
+
+   Structure follows Rule 5: a header, then :root custom properties (Rule 4),
+   then sections grouped by purpose. Hex values live ONLY in :root — every rule
+   below references a --app-* property so a palette change is a one-line edit.
+   ============================================================================= */
+
+/* --- CSS custom properties (Rule 4) ---------------------------------------- */
+/* App-specific palette. Prefixed --app-* to avoid colliding with Bootstrap's
+   own custom properties. The grade ramp drives the data-driven chip colour in
+   utils_style_helpers.R::grade_fill().                                         */
+:root {
+  --app-accent:    #18BC9C;   /* flatly teal — matches bs_theme(success=)       */
+  --app-bg-muted:  #f8f9fa;
+  --app-border:    #dee2e6;
+  --app-ink-muted: #6c757d;
+
+  /* Toxicity-grade ramp (0 = none → 4 = severe). Referenced by grade_fill().   */
+  --app-grade-0: #adb5bd;
+  --app-grade-1: #18BC9C;
+  --app-grade-2: #f0ad4e;
+  --app-grade-3: #ed6c02;
+  --app-grade-4: #c62828;
+}
+
+/* --- Summary cards (Custom components tab) ---------------------------------- */
+/* Accent-bordered metric cards. The left border colour comes from a custom
+   property so the three variants differ by one line each.                      */
+.summary-card {
+  border-left: 4px solid var(--app-accent);
+  background: var(--app-bg-muted);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+.summary-card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.summary-card-label {
+  color: var(--app-ink-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.summary-card-warn { border-left-color: var(--app-grade-3); }
+.summary-card-ok   { border-left-color: var(--app-grade-1); }
+
+/* --- Status indicators + animation (Custom components tab) ------------------ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 999px;
+  width: fit-content;
+}
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-idle { background: #f0f0f0; color: var(--app-ink-muted); }
+.status-idle .status-dot { background: #adb5bd; }
+
+.status-live { background: #d4f7ee; color: #0c6b58; }
+.status-live .status-dot {
+  background: var(--app-accent);
+  animation: app-pulse 1.2s ease-in-out infinite;
+}
+@keyframes app-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%      { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* --- Flush card body — the ONE documented !important (Rule 7) --------------- */
+/* bslib gives card bodies default padding; we zero it here so the body can
+   manage its own edge spacing. !important is needed to beat the framework's
+   own specificity, and per Rule 7 it carries a comment saying why.             */
+.flush-card-body {
+  padding: 0 !important;
+}
+
+/* --- Percent bar — STATIC parts only (Computed styles tab) ------------------ */
+/* The bar's width + fill are computed per-row in pct_bar() and applied inline
+   (Rule 2). Everything that does NOT vary with the data lives here as a class
+   (Rule 1) — inline carries only what genuinely changes.                       */
+.pct-bar-track {
+  width: 100%;
+  height: 22px;
+  background: var(--app-bg-muted);
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.pct-bar-fill {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border-radius: 999px;
+  transition: width 0.3s ease;     /* animate when the slider re-renders the row */
+  min-width: 2.5rem;
+}
+.pct-bar-label {
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding-right: 8px;
+}
+
+/* --- Grade chip — STATIC shape only (Computed styles tab) ------------------- */
+/* Shape/typography here; the background colour is data-driven (grade_fill())
+   and applied inline (Rule 2).                                                 */
+.grade-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+/* --- Subject row + conditional flag (Computed styles tab) ------------------- */
+.subject-row {
+  border-bottom: 1px solid var(--app-border);
+}
+.subject-row:last-child { border-bottom: none; }
+.subject-id { min-width: 3.5rem; }
+/* The flag CLASS is static; whether a row gets it is decided in R from the
+   slider value (the Rule 2/3 boundary — data decides, CSS renders).            */
+.subject-row-flagged {
+  background: #fff6f0;
+}
+
+/* --- Metric panels — NAMESPACED selectors (Modules & namespacing tab, Rule 6) */
+/* The module mod_metric_panel is instantiated twice. ns("value") renders as
+   "<module-id>-value" in the HTML, so the CSS ID selector MUST carry that
+   prefix — a bare `#value` would match nothing. Source: mod_metric_panel_ui()
+   uses div(id = ns("value"), ...); server ids are "metric_enrolled" and
+   "metric_completed" (see server.R).                                           */
+.metric-panel .metric-icon {
+  font-size: 1.75rem;
+  color: var(--app-ink-muted);
+}
+.metric-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+/* ns("value") in module "metric_enrolled" → "#metric_enrolled-value"           */
+#metric_enrolled-value { color: var(--bs-primary); }
+/* ns("value") in module "metric_completed" → "#metric_completed-value"         */
+#metric_completed-value { color: var(--app-accent); }
+
+/* --- Gallery item layout (Utility classes / Theme tabs) --------------------- */
+.gallery-item { margin-bottom: 1rem; }
+.gallery-demo { margin-bottom: 0.4rem; }
+.gallery-code {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--app-ink-muted);
+  background: var(--app-bg-muted);
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+/* --- Responsive override (Rule 5 — a media-query section) ------------------- */
+/* On narrow screens, let the metric number shrink so it never overflows.       */
+@media (max-width: 576px) {
+  .metric-value,
+  .summary-card-value { font-size: 1.6rem; }
+}

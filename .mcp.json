@@ -1,10 +1,10 @@
 {
   "mcpServers": {
     "shiny-rag": {
-      "command": "/Users/briancarter/Rdata/shiny-prep/rag/.venv/bin/python3",
-      "args": ["/Users/briancarter/Rdata/shiny-prep/rag/mcp_server.py"],
+      "command": "/Users/briancarter/Shiny/shiny-prep/rag/.venv/bin/python3",
+      "args": ["/Users/briancarter/Shiny/shiny-prep/rag/mcp_server.py"],
       "env": {
-        "DB_PATH": "/Users/briancarter/Rdata/shiny-prep/rag/rag.db"
+        "DB_PATH": "/Users/briancarter/Shiny/shiny-prep/rag/rag.db"
       }
     }
   }
