@@ -110,6 +110,16 @@ Therefore, for any app with **more than one tab / screen / major output**:
    service (LLM client, DB pool, file handle) can return the `with_error_handling()`
    fallback (`NULL`). Modules must guard that NULL and fail with a clean message,
    not wire downstream reactives with a broken object. Cover the NULL path.
+4. **Continuously-busy apps never go idle — don't `wait_for_idle()` while they
+   run.** An app with a running `invalidateLater()` loop, a poll, or a live
+   `ExtendedTask`/stream keeps Shiny perpetually busy, so `app$wait_for_idle()`
+   does **not** return — it aborts with "An error occurred while waiting for Shiny
+   to be stable" and the smoke test fails for the wrong reason. Drive these apps
+   by **starting the activity, sleeping a fixed wall-clock interval to let frames
+   fire (`Sys.sleep(n)`), then stopping/pausing it BEFORE any `wait_for_idle()`**
+   so the reactive graph can settle and assertions can read final values. Read
+   live values mid-run with `app$get_value()` (no idle wait needed). Worked
+   reference: `examples/09. annimation/tests/testthat/test-app-smoke.R`.
 
 ## Rule 7 — Verify in the locked environment, the way it will be run
 
@@ -122,3 +132,10 @@ activated can resolve a dependency to a **different version** than `renv.lock` �
 classic symptom is an error naming a symbol that does not exist in the locked
 package (e.g. an old DT internal). If a failure cannot be reproduced under a fresh
 renv-activated process, suspect environment drift before chasing a code bug.
+
+Run from the **project root**, not the app subdirectory. Sourcing
+`source("renv/activate.R")` with the working directory set inside an app folder
+(e.g. `examples/09. annimation/`) makes renv fail to find its project and try to
+**re-bootstrap itself over the network** ("Bootstrapping renv … Downloading renv …
+FAILED"), which then halts the run. Activate at the root, then `setwd()` into the
+app — exactly as the command above does.

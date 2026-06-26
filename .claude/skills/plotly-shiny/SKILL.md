@@ -107,6 +107,13 @@ plotlyProxyInvoke(proxy, "deleteTraces", list(idx))   # idx 0-based
 **Use a full re-render instead when** the underlying data changes entirely, or for
 the first render (`renderPlotly()` is mandatory initially).
 
+**Real-time animation** is the same pattern at speed: render the figure once, then
+drive a self-re-arming `observe({ invalidateLater(delay); ... })` loop that pushes
+only new `x`/`y` to the traces via one `restyle` per frame. This holds 100+ moving
+points smooth where a `renderPlotly`-in-a-timer stutters (it rebuilds the WebGL
+context every tick). Decouple physics from paint with a "steps per frame" knob.
+Worked reference: `examples/09. annimation/` (random-walk escape).
+
 **deleteTraces pitfall:** deleting shifts indices, so delete from the highest
 index downward. Guard observers that delete on startup with `ignoreInit = TRUE` —
 otherwise you call `deleteTraces` on an index that does not exist yet.
@@ -234,4 +241,12 @@ Centralize styling so every plot is cohesive — edit one function to restyle al
   when you supply a custom `text` column.
 - **Threshold lines move with the data** — set `xref = "paper"` on horizontal
   shapes/labels so they span the full width regardless of x-range.
+- **`scaleanchor` + two fixed axis ranges → collapsed view** — to force a square
+  aspect (`yaxis = list(scaleanchor = "x", scaleratio = 1)`) AND also pin both
+  `xaxis$range` and `yaxis$range` with `fixedrange = TRUE` makes plotly zoom into
+  a tiny sub-window — shapes and most traces fall off-screen while only a stray
+  annotation shows (a total but silent failure). Pick ONE: either let
+  `scaleanchor` derive a range (set the range on just one axis), or drop
+  `scaleanchor` and honour explicit ranges proportioned to read roughly square.
+  See `examples/09. annimation/R/plot_arena.R`.
 ```
