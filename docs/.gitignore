@@ -1,3 +1,4 @@
 # Local-only docs — keep on disk, do not track in git
 /comparisons/
 /pdf/
+/img/
