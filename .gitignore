@@ -20,4 +20,4 @@ __pycache__/
 .claude/settings.local.json
 .claude/.lint-queue
 
-.vscode/
+/.vscode
