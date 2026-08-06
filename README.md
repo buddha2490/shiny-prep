@@ -124,6 +124,3 @@ Both files contain **absolute paths** that must be updated to match your local c
 }
 ```
 
-## License
-
-Private repository. Not licensed for redistribution.
