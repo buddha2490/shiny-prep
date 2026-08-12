@@ -21,3 +21,6 @@ __pycache__/
 .claude/.lint-queue
 
 /.vscode
+
+# --- Scratch work ------------------------------------------------------------
+scratch-pad/
